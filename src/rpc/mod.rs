@@ -16,6 +16,7 @@ use crate::reactive::WebSocketContext;
 /// RPC method types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum RpcMethod {
+    Call,
     Query,
     Mutation,
     Subscription,
@@ -74,10 +75,10 @@ impl<T> RpcClient<T>
 where
     T: Serialize + for<'de> Deserialize<'de> + Clone + Send + Sync + 'static,
 {
-    pub fn new(context: WebSocketContext) -> Self {
+    pub fn new(context: WebSocketContext, codec: JsonCodec) -> Self {
         Self {
             context,
-            codec: JsonCodec,
+            codec,
             next_id: std::sync::atomic::AtomicU64::new(1),
             _phantom: std::marker::PhantomData,
         }
@@ -111,7 +112,7 @@ where
     pub fn subscribe<R>(
         &self,
         method: &str,
-        params: T,
+        params: &T,
     ) -> RpcSubscription<R>
     where
         R: for<'de> Deserialize<'de> + Clone + Send + Sync + 'static,
@@ -120,7 +121,7 @@ where
         let request = RpcRequest {
             id: id.clone(),
             method: method.to_string(),
-            params,
+            params: params.clone(),
             method_type: RpcMethod::Subscription,
         };
         
@@ -138,7 +139,7 @@ where
         }
     }
     
-    async fn call<R>(
+    pub async fn call<R>(
         &self,
         method: &str,
         params: T,
@@ -203,7 +204,7 @@ pub fn use_rpc_client<T>(context: WebSocketContext) -> RpcClient<T>
 where
     T: Serialize + for<'de> Deserialize<'de> + Clone + Send + Sync + 'static,
 {
-    RpcClient::<T>::new(context)
+    RpcClient::<T>::new(context, JsonCodec)
 }
 
 /// Macro for defining RPC services

@@ -230,14 +230,11 @@ fn provide_websocket_inner(_url: &str) -> Option<()> {
 /// # Examples
 ///
 /// ```rust
-/// use leptos_ws::provide_websocket;
+/// use leptos_ws_pro::WebSocketProvider;
 ///
 /// fn setup_websocket() {
-///     if let Some(_) = provide_websocket("ws://example.com/socket") {
-///         println!("WebSocket connection established");
-///     } else {
-///         println!("Running in SSR mode or connection failed");
-///     }
+///     let provider = WebSocketProvider::new("ws://example.com/socket");
+///     println!("WebSocket provider created");
 /// }
 /// ```
 ///

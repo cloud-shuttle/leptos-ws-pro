@@ -25,6 +25,17 @@ A production-ready WebSocket library for Leptos with transport layer, RPC system
 - **🔄 SSE Support** - Server-Sent Events implementation
 - **🔄 Performance Optimizations** - Zero-copy serialization improvements
 
+📋 **[View Complete Roadmap to v1.0](ROADMAP.md)** - Detailed development plan with phases, timelines, and success metrics
+
+## 🗺️ Roadmap Overview
+
+| Phase | Version | Target | Focus |
+|-------|---------|--------|-------|
+| **Current** | v0.2.0-beta | ✅ Released | Core functionality with TDD |
+| **Next** | v0.3.0-alpha | Q1 2025 | Real network implementation |
+| **Future** | v0.4.0-beta | Q1 2025 | Production features & performance |
+| **Goal** | v1.0.0 | Q3 2025 | Stable production release |
+
 ## 📊 Test Coverage
 
 - **✅ Unit Tests**: 28 tests (all passing)

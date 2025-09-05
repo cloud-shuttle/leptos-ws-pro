@@ -1,42 +1,46 @@
 # Leptos WS Pro
 
-A world-class WebSocket library for Leptos with comprehensive testing infrastructure.
+A WebSocket library for Leptos with basic functionality and comprehensive testing infrastructure.
 
 [![Crates.io](https://img.shields.io/crates/v/leptos-ws-pro.svg)](https://crates.io/crates/leptos-ws-pro)
 [![Documentation](https://docs.rs/leptos-ws-pro/badge.svg)](https://docs.rs/leptos-ws-pro)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 🚀 Features
+## 🚀 Current Features (Alpha)
 
-- **🌐 Real WebSocket Server Testing** - Actual network communication with `tokio-tungstenite`
-- **🎭 Cross-Browser Testing** - Playwright integration with 6+ browsers
-- **📱 Mobile Device Support** - iOS and Android browser testing
-- **⚡ Performance Monitoring** - Load testing and performance benchmarks
-- **🔄 Complete User Journey Testing** - End-to-end workflow validation
-- **🏗️ Production-Ready CI/CD** - Comprehensive testing infrastructure
-- **🔧 Modular Architecture** - Transport, Codec, Reactive, and RPC layers
-- **📊 200+ Tests** - Unit, integration, server, browser, and load tests
+- **✅ JSON Codec** - Working JSON serialization/deserialization
+- **✅ Basic WebSocket Context** - Reactive WebSocket state management
+- **✅ Message Wrapper** - Type-safe message handling
+- **✅ Connection State Management** - Basic connection state tracking
+- **✅ Comprehensive Tests** - 28 passing unit tests
+- **✅ Modular Architecture** - Clean separation of concerns
+
+## 🚧 In Development
+
+- **🔄 Real WebSocket Connections** - Actual network communication
+- **🔄 Transport Layer** - WebSocket, WebTransport, SSE implementations
+- **🔄 RPC System** - Type-safe request/response handling
+- **🔄 Advanced Features** - Reconnection, heartbeat, presence
 
 ## 📊 Test Coverage
 
-- **Unit Tests**: 28 tests
-- **Integration Tests**: 89 tests  
-- **Server Tests**: 12 tests (real WebSocket server)
-- **Browser Tests**: 40+ tests (Playwright cross-browser)
-- **User Journey Tests**: 25+ tests (complete workflows)
-- **Load Tests**: 15+ tests (performance & scalability)
-- **Total**: 200+ tests
+- **✅ Unit Tests**: 28 tests (all passing)
+- **🚧 Integration Tests**: Planned
+- **🚧 Server Tests**: Planned  
+- **🚧 Browser Tests**: Planned
+- **🚧 User Journey Tests**: Planned
+- **🚧 Load Tests**: Planned
 
 ## 🎭 Browser Support
 
 | Browser | Desktop | Mobile | Status |
 |---------|---------|--------|--------|
-| **Chrome** | ✅ | ✅ | Fully Tested |
-| **Firefox** | ✅ | ✅ | Fully Tested |
-| **Safari** | ✅ | ✅ | Fully Tested |
-| **Edge** | ✅ | ✅ | Fully Tested |
-| **Mobile Chrome** | N/A | ✅ | Fully Tested |
-| **Mobile Safari** | N/A | ✅ | Fully Tested |
+| **Chrome** | 🚧 | 🚧 | Planned |
+| **Firefox** | 🚧 | 🚧 | Planned |
+| **Safari** | 🚧 | 🚧 | Planned |
+| **Edge** | 🚧 | 🚧 | Planned |
+| **Mobile Chrome** | N/A | 🚧 | Planned |
+| **Mobile Safari** | N/A | 🚧 | Planned |
 
 ## 🚀 Quick Start
 
@@ -44,25 +48,33 @@ A world-class WebSocket library for Leptos with comprehensive testing infrastruc
 
 ```toml
 [dependencies]
-leptos-ws-pro = "1.0"
+leptos-ws-pro = "0.1.0-alpha"
 ```
 
 ### Basic Usage
 
 ```rust
 use leptos_ws_pro::*;
+use leptos::prelude::*;
 
-// Create WebSocket provider
-let provider = WebSocketProvider::new("ws://localhost:8080");
-
-// Create reactive context
-let context = WebSocketContext::new(provider);
-
-// Send messages
-context.send_message("Hello, Server!");
-
-// Handle responses
-let messages = context.get_received_messages::<String>();
+#[component]
+fn MyApp() -> impl IntoView {
+    // Create WebSocket context
+    let ws_context = use_websocket("ws://localhost:8080");
+    
+    // Test JSON codec
+    let codec = JsonCodec::new();
+    let message = "Hello, WebSocket!";
+    let encoded = codec.encode(&message).unwrap();
+    let decoded: String = codec.decode(&encoded).unwrap();
+    
+    view! {
+        <div>
+            <p>"Connection state: " {move || format!("{:?}", ws_context.connection_state())}</p>
+            <p>"Message: " {decoded}</p>
+        </div>
+    }
+}
 ```
 
 ## 🧪 Testing Infrastructure
@@ -156,16 +168,16 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Inspired by the original [leptos_ws](https://github.com/TimTom2016/leptos_ws) library
 - Powered by [Playwright](https://playwright.dev/) for browser testing
 
-## 🚀 Production Ready
+## 🚀 Alpha Release Status
 
-This library is production-ready with:
-- ✅ Comprehensive testing (200+ tests)
-- ✅ Cross-browser compatibility
-- ✅ Performance monitoring
-- ✅ CI/CD integration
-- ✅ Real-world validation
-- ✅ Complete documentation
+This library is in **alpha** with:
+- ✅ Basic functionality working
+- ✅ Comprehensive unit tests (28 tests)
+- ✅ Clean architecture
+- ✅ Honest documentation
+- 🚧 Real WebSocket connections (planned)
+- 🚧 Production features (planned)
 
 ---
 
-**Leptos WS Pro** - The world-class WebSocket library for Leptos with comprehensive testing infrastructure.
+**Leptos WS Pro** - A WebSocket library for Leptos with basic functionality and comprehensive testing infrastructure.

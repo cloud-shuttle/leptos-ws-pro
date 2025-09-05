@@ -1,10 +1,10 @@
 [package]
 name = "leptos-ws-pro"
-version = "1.0.0"
+version = "0.1.0-alpha"
 edition = "2021"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]
-description = "World-class WebSocket library for Leptos with comprehensive testing infrastructure"
+description = "A WebSocket library for Leptos with basic functionality and comprehensive testing infrastructure"
 documentation = "https://docs.rs/leptos-ws-pro/latest/"
 repository = "https://github.com/cloud-shuttle/leptos-ws-pro"
 keywords = ["leptos", "websocket", "server", "signal", "testing", "playwright", "e2e"]
@@ -120,10 +120,14 @@ actix = ["dep:tower", "dep:tower-http"]
 # Leptos features
 islands = ["leptos/islands"]
 
-[[bench]]
-name = "codec_bench"
-harness = false
-required-features = ["dev"]
+[[example]]
+name = "websocket-basic"
+path = "examples/basic/websocket-basic.rs"
+
+# [[bench]]
+# name = "codec_bench"
+# harness = false
+# required-features = ["dev"]
 
 [dev-dependencies]
 tempfile = "3.21"

@@ -195,13 +195,13 @@ The test runner orchestrates the entire testing pipeline:
 
 ### Report Generation
 
-**HTML Report**: `test-results/comprehensive-report.html`
+**HTML Report**: `tests/test-results/comprehensive-report.html`
 - Visual test results
 - Performance metrics
 - Coverage statistics
 - Recommendations
 
-**JSON Report**: `test-results/comprehensive-report.json`
+**JSON Report**: `tests/test-results/comprehensive-report.json`
 - Machine-readable results
 - Detailed test data
 - Performance metrics
@@ -314,7 +314,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: test-results
-          path: test-results/
+          path: tests/test-results/
 ```
 
 ## 📚 Best Practices

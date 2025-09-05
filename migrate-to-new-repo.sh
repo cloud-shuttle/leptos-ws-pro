@@ -364,7 +364,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Playwright
-test-results/
+tests/test-results/
 playwright-report/
 playwright/.cache/
 

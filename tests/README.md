@@ -216,7 +216,7 @@ jobs:
 - **Performance Reports**: Benchmark results
 
 ### **Report Locations**
-- `test-results/` - Playwright test results
+- `tests/test-results/` - Playwright test results
 - `target/coverage/` - Code coverage reports
 - `target/criterion/` - Benchmark reports
 

@@ -190,8 +190,8 @@ jobs:
       - run: node tests/e2e/test-runner.js
       - uses: actions/upload-artifact@v3
         with:
-          name: test-results
-          path: test-results/
+          name: tests/test-results
+          path: tests/test-results/
 ```
 
 ### **Comprehensive Reporting**
@@ -236,7 +236,7 @@ leptos_ws/
 ├── playwright.config.ts          # Playwright configuration
 ├── package.json                  # Node.js dependencies
 ├── Cargo.toml                    # Rust dependencies
-└── test-results/                 # Generated reports
+└── tests/test-results/                 # Generated reports
     ├── comprehensive-report.html # HTML report
     └── comprehensive-report.json # JSON report
 ```

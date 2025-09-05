@@ -229,15 +229,15 @@ class TestRunner {
 
     // Write report to file
     await fs.writeFile(
-      'test-results/comprehensive-report.json',
+      'tests/test-results/comprehensive-report.json',
       JSON.stringify(report, null, 2)
     );
 
     // Generate HTML report
     const htmlReport = this.generateHtmlReport(report);
-    await fs.writeFile('test-results/comprehensive-report.html', htmlReport);
+    await fs.writeFile('tests/test-results/comprehensive-report.html', htmlReport);
 
-    console.log('📊 Test report generated: test-results/comprehensive-report.html');
+    console.log('📊 Test report generated: tests/test-results/comprehensive-report.html');
     return report;
   }
 
@@ -362,7 +362,7 @@ class TestRunner {
       console.log('🎉 Comprehensive test suite completed successfully!');
       console.log(`📊 Total tests: ${report.coverage.totalTests}`);
       console.log(`⏱️  Duration: ${(report.summary.duration / 1000).toFixed(2)} seconds`);
-      console.log(`📄 Report: test-results/comprehensive-report.html`);
+      console.log(`📄 Report: tests/test-results/comprehensive-report.html`);
       
     } catch (error) {
       console.error('❌ Test suite failed:', error);

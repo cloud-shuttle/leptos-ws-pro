@@ -1,4 +1,4 @@
-use crate::transport::{Transport, TransportConfig, TransportError, Message, MessageType, ConnectionState};
+use crate::transport::{Transport, TransportConfig, TransportError, Message, MessageType, ConnectionState, TransportCapabilities};
 use async_trait::async_trait;
 use futures::{Sink, Stream, SinkExt, StreamExt};
 use std::pin::Pin;
@@ -21,9 +21,10 @@ impl WebSocketConnection {
     pub fn capabilities(&self) -> TransportCapabilities {
         TransportCapabilities {
             websocket: true,
+            webtransport: false,
+            sse: false,
             binary: true,
             compression: false,
-            multiplexing: false,
         }
     }
 }
@@ -56,13 +57,7 @@ impl Transport for WebSocketConnection {
     }
 }
 
-#[derive(Debug, Clone)]
-pub struct TransportCapabilities {
-    pub websocket: bool,
-    pub binary: bool,
-    pub compression: bool,
-    pub multiplexing: bool,
-}
+// TransportCapabilities is defined in mod.rs
 
 #[cfg(test)]
 mod tests {

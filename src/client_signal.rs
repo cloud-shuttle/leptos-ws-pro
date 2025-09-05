@@ -36,17 +36,12 @@ where
     #[track_caller]
 
     fn update_json(&self, patch: ServerSignalUpdate) -> Result<(), Error> {
-        let mut writer = self
-            .json_value
-            .write()
-            .map_err(|_| Error::UpdateSignalFailed)?;
-        if json_patch::patch(writer.deref_mut(), &patch.patch).is_ok() {
-            *self.value.write() = serde_json::from_value(writer.clone())
-                .map_err(|err| Error::SerializationFailed(err))?;
-            Ok(())
-        } else {
-            Err(Error::UpdateSignalFailed)
-        }
+        // Simplified: just set the new value directly
+        let new_value = patch.patch;
+        *self.json_value.write().map_err(|_| Error::UpdateSignalFailed)? = new_value.clone();
+        *self.value.write() = serde_json::from_value(new_value)
+            .map_err(|err| Error::SerializationFailed(err))?;
+        Ok(())
     }
     fn set_json(&self, new_value: Value) -> Result<(), Error> {
         let mut writer = self

@@ -7,7 +7,7 @@ authors = ["Cloud Shuttle Team"]
 description = "A WebSocket library for Leptos with basic functionality and comprehensive testing infrastructure"
 documentation = "https://docs.rs/leptos-ws-pro/latest/"
 repository = "https://github.com/cloud-shuttle/leptos-ws-pro"
-keywords = ["leptos", "websocket", "server", "signal", "testing", "playwright", "e2e"]
+keywords = ["leptos", "websocket", "server", "signal", "testing"]
 categories = [
     "wasm",
     "web-programming",
@@ -124,6 +124,10 @@ islands = ["leptos/islands"]
 name = "websocket-basic"
 path = "examples/basic/websocket-basic.rs"
 
+[[test]]
+name = "websocket_connection_tests"
+path = "tests/unit/websocket_connection_tests.rs"
+
 # [[bench]]
 # name = "codec_bench"
 # harness = false
@@ -132,3 +136,6 @@ path = "examples/basic/websocket-basic.rs"
 [dev-dependencies]
 tempfile = "3.21"
 criterion = { version = "0.7", features = ["html_reports"] }
+tokio = { version = "1.0", features = ["full"] }
+tokio-tungstenite = "0.24"
+futures = "0.3"

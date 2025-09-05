@@ -1,0 +1,32 @@
+{
+  "name": "leptos-ws-testing",
+  "version": "0.8.0",
+  "description": "Comprehensive testing infrastructure for leptos_ws library",
+  "type": "module",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:chromium": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:mobile": "playwright test --project='Mobile Chrome' --project='Mobile Safari'",
+    "test:report": "playwright show-report",
+    "dev": "python3 -m http.server 3000 --directory tests/e2e/fixtures",
+    "install:browsers": "playwright install",
+    "install:deps": "playwright install-deps"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "keywords": [
+    "leptos",
+    "websocket",
+    "testing",
+    "playwright",
+    "e2e"
+  ],
+  "author": "leptos_ws contributors",
+  "license": "MIT"
+}

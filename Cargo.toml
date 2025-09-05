@@ -1,0 +1,130 @@
+[package]
+name = "leptos-ws-pro"
+version = "1.0.0"
+edition = "2021"
+license = "MIT"
+authors = ["Cloud Shuttle Team"]
+description = "World-class WebSocket library for Leptos with comprehensive testing infrastructure"
+documentation = "https://docs.rs/leptos-ws-pro/latest/"
+repository = "https://github.com/cloud-shuttle/leptos-ws-pro"
+keywords = ["leptos", "websocket", "server", "signal", "testing", "playwright", "e2e"]
+categories = [
+    "wasm",
+    "web-programming",
+    "web-programming::http-client",
+    "web-programming::http-server",
+    "web-programming::websocket",
+]
+readme = "README.md"
+
+[dependencies]
+# Core Leptos integration
+leptos = { version = "0.8.8", default-features = false }
+leptos-use = { version = "0.16.2", default-features = false, features = [
+    "use_websocket",
+] }
+
+# Serialization and zero-copy
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rkyv = { version = "0.7", features = ["std", "size_32", "validation"] }
+rkyv_dyn = "0.7"
+
+# Async runtime and networking
+async-trait = "0.1"
+futures = { version = "0.3", features = ["std"], optional = true }
+futures-util = { version = "0.3", features = ["std"], optional = true }
+tokio = { version = "1.47", features = ["full"], optional = true }
+
+# WebSocket and transport
+gloo-net = { version = "0.6", optional = true }
+web-sys = { version = "0.3", optional = true, features = [
+    "WebSocket",
+    "MessageEvent",
+    "CloseEvent",
+    "ErrorEvent",
+] }
+
+# HTTP and WebTransport
+reqwest = { version = "0.12", features = ["json", "stream"], optional = true }
+hyper = { version = "1.0", features = ["full"], optional = true }
+
+# Server frameworks
+axum = { version = "0.7", optional = true }
+tower = { version = "0.5", optional = true }
+tower-http = { version = "0.5", optional = true }
+
+# WebSocket implementations
+tokio-tungstenite = { version = "0.24", optional = true }
+
+# Data structures and concurrency
+dashmap = { version = "5.5", optional = true }
+crossbeam-channel = { version = "0.5", optional = true }
+
+# Cryptography and compression
+ring = { version = "0.17", optional = true }
+zstd = { version = "0.13", optional = true }
+
+# Error handling
+thiserror = "1.0"
+
+# Logging and observability
+tracing = { version = "0.1", optional = true }
+tracing-subscriber = { version = "0.3", optional = true }
+metrics = { version = "0.22", optional = true }
+metrics-exporter-prometheus = { version = "0.13", optional = true }
+
+# Authentication
+jsonwebtoken = { version = "9.2", optional = true }
+
+# Collaboration features
+num-bigint = { version = "0.4", optional = true }
+json-patch = { version = "0.2", optional = true }
+
+# Development and testing
+tempfile = { version = "3.21", optional = true }
+criterion = { version = "0.7", features = ["html_reports"], optional = true }
+
+[features]
+default = ["client", "server", "compression", "metrics", "dep:futures", "dep:tracing", "dep:num-bigint"]
+
+# Platform support
+client = ["gloo-net", "web-sys", "reqwest"]
+server = ["dep:tokio", "axum", "dep:tower", "dep:tower-http", "dep:tokio-tungstenite", "dep:futures-util"]
+ssr = ["leptos/ssr", "dep:tokio", "dep:futures"]
+
+# Transport protocols
+websocket = ["client", "server"]
+webtransport = ["client", "dep:hyper", "reqwest"]
+sse = ["client", "reqwest"]
+
+# Performance and features
+compression = ["dep:zstd"]
+zero-copy = ["rkyv/std"]
+simd = ["dep:ring"]
+collaboration = ["dep:num-bigint", "dep:json-patch"]
+auth = ["dep:jsonwebtoken"]
+encryption = ["dep:ring"]
+metrics = ["dep:metrics", "dep:metrics-exporter-prometheus"]
+tracing = ["dep:tracing", "dep:tracing-subscriber"]
+
+# Development and testing
+dev = ["dep:tempfile", "dep:criterion"]
+testing = ["dep:tempfile"]
+
+# Server framework integration
+axum = ["dep:axum", "dep:tower", "dep:tower-http"]
+warp = ["dep:tower", "dep:tower-http"]
+actix = ["dep:tower", "dep:tower-http"]
+
+# Leptos features
+islands = ["leptos/islands"]
+
+[[bench]]
+name = "codec_bench"
+harness = false
+required-features = ["dev"]
+
+[dev-dependencies]
+tempfile = "3.21"
+criterion = { version = "0.7", features = ["html_reports"] }

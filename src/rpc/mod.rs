@@ -84,6 +84,14 @@ where
         }
     }
     
+    pub fn context(&self) -> &WebSocketContext {
+        &self.context
+    }
+    
+    pub fn context_mut(&mut self) -> &mut WebSocketContext {
+        &mut self.context
+    }
+    
     /// Make a query call
     pub async fn query<R>(
         &self,

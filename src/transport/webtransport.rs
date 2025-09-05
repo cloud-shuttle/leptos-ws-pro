@@ -20,6 +20,61 @@ impl WebTransportConnection {
     pub fn state(&self) -> ConnectionState {
         self.state
     }
+    
+    pub async fn create_stream(&self) -> Result<(), TransportError> {
+        Err(TransportError::ConnectionFailed("WebTransport not implemented".to_string()))
+    }
+    
+    pub async fn create_multiplexed_streams(&self, _count: usize) -> Result<Vec<()>, TransportError> {
+        Err(TransportError::ConnectionFailed("WebTransport not implemented".to_string()))
+    }
+    
+    pub async fn setup_http3_connection(&self) -> Result<(), TransportError> {
+        Err(TransportError::ConnectionFailed("WebTransport not implemented".to_string()))
+    }
+    
+    pub async fn connect_with_fallback(&mut self) -> Result<(), TransportError> {
+        Err(TransportError::ConnectionFailed("WebTransport not implemented".to_string()))
+    }
+    
+    pub async fn send_message<T: serde::Serialize>(&self, _message: &T) -> Result<(), TransportError> {
+        Err(TransportError::SendFailed("WebTransport not implemented".to_string()))
+    }
+    
+    pub async fn receive_message<T: for<'de> serde::Deserialize<'de>>(&self) -> Result<T, TransportError> {
+        Err(TransportError::ReceiveFailed("WebTransport not implemented".to_string()))
+    }
+    
+    pub async fn reconnect(&mut self) -> Result<(), TransportError> {
+        Err(TransportError::ConnectionFailed("WebTransport not implemented".to_string()))
+    }
+    
+    pub async fn reconnect_with_backoff(&mut self) -> Result<(), TransportError> {
+        Err(TransportError::ConnectionFailed("WebTransport not implemented".to_string()))
+    }
+    
+    pub fn get_performance_metrics(&self) -> PerformanceMetrics {
+        PerformanceMetrics {
+            connection_count: 0,
+            message_count: 0,
+            error_count: 0,
+        }
+    }
+    
+    pub async fn optimize_for_latency(&self) -> Result<(), TransportError> {
+        Ok(())
+    }
+    
+    pub async fn optimize_for_throughput(&self) -> Result<(), TransportError> {
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct PerformanceMetrics {
+    pub connection_count: u64,
+    pub message_count: u64,
+    pub error_count: u64,
 }
 
 #[async_trait]

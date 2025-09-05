@@ -140,6 +140,14 @@ path = "tests/unit/rpc_system_tests.rs"
 name = "advanced_features_tests"
 path = "tests/unit/advanced_features_tests.rs"
 
+[[test]]
+name = "real_websocket_tests"
+path = "tests/integration/real_websocket_tests.rs"
+
+[[test]]
+name = "webtransport_tests"
+path = "tests/integration/webtransport_tests.rs"
+
 # [[bench]]
 # name = "codec_bench"
 # harness = false
@@ -152,3 +160,4 @@ tokio = { version = "1.0", features = ["full"] }
 tokio-tungstenite = "0.24"
 futures = "0.3"
 chrono = { version = "0.4", features = ["serde"] }
+base64 = "0.22"

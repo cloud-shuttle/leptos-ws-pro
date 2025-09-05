@@ -77,6 +77,7 @@ pub struct TransportCapabilities {
     pub binary: bool,
 }
 
+
 impl TransportCapabilities {
     pub fn detect() -> Self {
         #[cfg(target_arch = "wasm32")]

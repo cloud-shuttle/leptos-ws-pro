@@ -16,6 +16,10 @@ impl SseConnection {
             state: ConnectionState::Disconnected,
         })
     }
+
+    pub fn state(&self) -> ConnectionState {
+        self.state
+    }
 }
 
 #[async_trait]
@@ -24,8 +28,8 @@ impl Transport for SseConnection {
     type Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>;
     
     async fn connect(&mut self, _url: &str) -> Result<(), TransportError> {
-        self.state = ConnectionState::Connected;
-        Ok(())
+        // SSE is not yet implemented
+        Err(TransportError::ConnectionFailed("SSE not implemented".to_string()))
     }
     
     async fn disconnect(&mut self) -> Result<(), TransportError> {

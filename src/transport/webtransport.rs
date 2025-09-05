@@ -16,6 +16,10 @@ impl WebTransportConnection {
             state: ConnectionState::Disconnected,
         })
     }
+
+    pub fn state(&self) -> ConnectionState {
+        self.state
+    }
 }
 
 #[async_trait]
@@ -24,8 +28,8 @@ impl Transport for WebTransportConnection {
     type Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>;
     
     async fn connect(&mut self, _url: &str) -> Result<(), TransportError> {
-        self.state = ConnectionState::Connected;
-        Ok(())
+        // WebTransport is not yet implemented
+        Err(TransportError::ConnectionFailed("WebTransport not implemented".to_string()))
     }
     
     async fn disconnect(&mut self) -> Result<(), TransportError> {

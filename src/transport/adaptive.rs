@@ -16,6 +16,16 @@ impl AdaptiveTransport {
             state: ConnectionState::Disconnected,
         })
     }
+
+    pub fn capabilities(&self) -> crate::transport::TransportCapabilities {
+        crate::transport::TransportCapabilities {
+            websocket: true,
+            webtransport: false,
+            sse: true,
+            binary: true,
+            compression: false,
+        }
+    }
 }
 
 #[async_trait]
@@ -24,8 +34,8 @@ impl Transport for AdaptiveTransport {
     type Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>;
     
     async fn connect(&mut self, _url: &str) -> Result<(), TransportError> {
-        self.state = ConnectionState::Connected;
-        Ok(())
+        // Adaptive transport is not yet implemented
+        Err(TransportError::ConnectionFailed("Adaptive transport not implemented".to_string()))
     }
     
     async fn disconnect(&mut self) -> Result<(), TransportError> {

@@ -128,6 +128,10 @@ path = "examples/basic/websocket-basic.rs"
 name = "websocket_connection_tests"
 path = "tests/unit/websocket_connection_tests.rs"
 
+[[test]]
+name = "transport_layer_tests"
+path = "tests/unit/transport_layer_tests.rs"
+
 # [[bench]]
 # name = "codec_bench"
 # harness = false

@@ -1,6 +1,6 @@
 [package]
 name = "leptos-ws-pro"
-version = "0.3.0-alpha"
+version = "0.4.0-alpha"
 edition = "2024"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]
@@ -38,6 +38,7 @@ tokio = { version = "1.47", features = ["full"], optional = true }
 
 # WebSocket and transport
 gloo-net = { version = "0.6", optional = true }
+eventsource-stream = { version = "0.1", optional = true }
 web-sys = { version = "0.3", optional = true, features = [
     "WebSocket",
     "MessageEvent",
@@ -47,6 +48,9 @@ web-sys = { version = "0.3", optional = true, features = [
 
 # HTTP and WebTransport
 reqwest = { version = "0.12", features = ["json", "stream"], optional = true }
+wtransport = { version = "0.6.1", optional = true }
+h3 = { version = "0.0.8", optional = true }
+quinn = { version = "0.10", optional = true }
 hyper = { version = "1.7", features = ["full"], optional = true }
 
 # Server frameworks
@@ -95,8 +99,9 @@ ssr = ["leptos/ssr", "dep:tokio", "dep:futures"]
 
 # Transport protocols
 websocket = ["client", "server"]
-webtransport = ["client", "dep:hyper", "reqwest"]
-sse = ["client", "reqwest"]
+webtransport = ["client", "dep:hyper", "reqwest", "dep:wtransport", "dep:h3", "dep:quinn"]
+sse = ["client", "reqwest", "dep:eventsource-stream"]
+adaptive = ["websocket", "sse", "webtransport"]
 
 # Performance and features
 compression = ["dep:zstd"]
@@ -151,6 +156,22 @@ path = "tests/integration/webtransport_tests.rs"
 [[test]]
 name = "real_websocket_implementation_tests"
 path = "tests/unit/real_websocket_implementation_tests.rs"
+
+[[test]]
+name = "webtransport_implementation_tests"
+path = "tests/unit/webtransport_implementation_tests.rs"
+
+[[test]]
+name = "sse_implementation_tests"
+path = "tests/unit/sse_implementation_tests.rs"
+
+[[test]]
+name = "adaptive_transport_tests"
+path = "tests/unit/adaptive_transport_tests.rs"
+
+[[test]]
+name = "comprehensive_transport_tests"
+path = "tests/unit/comprehensive_transport_tests.rs"
 
 # [[bench]]
 # name = "codec_bench"

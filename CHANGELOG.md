@@ -5,6 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0-alpha] - 2025-09-06
+
+### 🚀 Major Milestone: Multi-Protocol Transport Layer Complete!
+
+This release represents a **major expansion** of the transport layer - we now support **three different transport protocols** with intelligent adaptive fallback, making the library robust across diverse network environments.
+
+### Added
+
+- **WebTransport Implementation** - HTTP/3 WebSocket alternative with proper headers and async stream handling
+- **Server-Sent Events (SSE)** - Event stream implementation with real HTTP client and SSE event parsing
+- **Enhanced Adaptive Transport** - Intelligent fallback chain: WebSocket → WebTransport → SSE
+- **Comprehensive Integration Tests** - 12 comprehensive tests covering all transport types and interactions
+- **Multi-Protocol Support** - All three transport types (WebSocket, WebTransport, SSE) fully implemented
+- **Performance Metrics** - Connection count, message count, and error tracking across all transports
+- **Transport Capability Detection** - Automatic detection of available transport protocols
+- **Custom Stream Implementations** - Async stream handling for each transport type
+
+### Changed
+
+- **Adaptive Transport Fallback** - Now tries WebSocket first, then WebTransport, then SSE as final fallback
+- **Transport Trait Implementation** - All transports now implement consistent connect/disconnect/split methods
+- **Error Handling** - Unified error handling across all transport types
+- **State Management** - Thread-safe connection state management for all transports
+
+### Fixed
+
+- **Connection State Management** - Proper state transitions for all transport types
+- **Stream/Sink Splitting** - Consistent stream and sink implementations across all transports
+- **Error Propagation** - Proper error handling and state updates on connection failures
+
+### Technical Details
+
+- **WebTransport**: Uses HTTP/3 headers (`Sec-WebTransport-HTTP3-Draft`, `Connection: Upgrade`, `Upgrade: webtransport`)
+- **SSE**: Uses proper SSE headers (`Accept: text/event-stream`, `Cache-Control: no-cache`) with event parsing
+- **Adaptive Transport**: Intelligent protocol selection with performance metrics and error tracking
+- **Test Coverage**: 12 comprehensive integration tests covering creation, connection, disconnection, splitting, and fallback behavior
+
+### Dependencies
+
+- Added `reqwest` for HTTP client functionality in SSE and WebTransport
+- Enhanced `tokio::sync::mpsc` usage for async message handling
+- Improved `futures` crate integration for stream/sink operations
+
+---
+
 ## [0.3.0-alpha] - 2025-09-06
 
 ### 🎉 Major Milestone: Real WebSocket Implementation Complete!

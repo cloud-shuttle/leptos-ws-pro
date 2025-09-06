@@ -3,6 +3,7 @@
 //! Provides compile-time guarantees for all WebSocket communications through
 //! procedural macros and trait-based routing.
 
+#[cfg(feature = "advanced-rpc")]
 pub mod advanced;
 
 use async_trait::async_trait;

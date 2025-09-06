@@ -3,6 +3,8 @@
 //! This module provides bidirectional RPC with request/response correlation,
 //! type-safe method definitions, and async method support.
 
+#[cfg(feature = "advanced-rpc")]
+
 use crate::transport::{Message, MessageType, Transport, TransportError};
 use async_trait::async_trait;
 use futures::{Sink, SinkExt, Stream, StreamExt};
@@ -13,6 +15,7 @@ use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
 use tokio::sync::{mpsc, oneshot};
+#[cfg(feature = "advanced-rpc")]
 use uuid::Uuid;
 
 /// RPC Request structure

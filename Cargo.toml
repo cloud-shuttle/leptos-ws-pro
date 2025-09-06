@@ -1,10 +1,10 @@
 [package]
 name = "leptos-ws-pro"
-version = "0.5.1-alpha"
+version = "0.6.0-beta"
 edition = "2024"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]
-description = "A production-ready WebSocket library for Leptos with transport layer, RPC system, and advanced features like reconnection and heartbeat"
+description = "⚠️ LLM-GENERATED: A production-ready WebSocket library for Leptos with transport layer, RPC system, and advanced features like reconnection and heartbeat. Generated entirely by LLM using TDD - requires human review before production use."
 documentation = "https://docs.rs/leptos-ws-pro/latest/"
 repository = "https://github.com/cloud-shuttle/leptos-ws-pro"
 keywords = ["leptos", "websocket", "server", "signal", "testing"]
@@ -52,6 +52,8 @@ wtransport = { version = "0.6.1", optional = true }
 h3 = { version = "0.0.8", optional = true }
 quinn = { version = "0.10", optional = true }
 hyper = { version = "1.7", features = ["full"], optional = true }
+hyper-util = { version = "0.1", optional = true }
+async-stream = { version = "0.3", optional = true }
 
 # Server frameworks
 axum = { version = "0.8", optional = true }
@@ -103,7 +105,7 @@ ssr = ["leptos/ssr", "dep:tokio", "dep:futures"]
 # Transport protocols
 websocket = ["client", "server"]
 webtransport = ["client", "dep:hyper", "reqwest", "dep:wtransport", "dep:h3", "dep:quinn"]
-sse = ["client", "reqwest", "dep:eventsource-stream"]
+sse = ["client", "reqwest", "dep:eventsource-stream", "dep:hyper", "dep:hyper-util", "dep:async-stream"]
 adaptive = ["websocket", "sse", "webtransport"]
 
 # Performance and features
@@ -190,6 +192,34 @@ path = "tests/unit/advanced_rpc_simple_tests.rs"
 [[test]]
 name = "compilation_warnings_tests"
 path = "tests/unit/compilation_warnings_tests.rs"
+
+[[test]]
+name = "real_websocket_network_tests"
+path = "tests/unit/real_websocket_network_tests.rs"
+
+[[test]]
+name = "real_sse_network_tests"
+path = "tests/unit/real_sse_network_tests.rs"
+
+[[test]]
+name = "real_webtransport_network_tests"
+path = "tests/unit/real_webtransport_network_tests.rs"
+
+[[test]]
+name = "real_network_integration_tests"
+path = "tests/unit/real_network_integration_tests.rs"
+
+[[test]]
+name = "load_testing_tests"
+path = "tests/unit/load_testing_tests.rs"
+
+[[test]]
+name = "performance_benchmark_tests"
+path = "tests/unit/performance_benchmark_tests.rs"
+
+[[test]]
+name = "stress_testing_tests"
+path = "tests/unit/stress_testing_tests.rs"
 
 # [[bench]]
 # name = "codec_bench"

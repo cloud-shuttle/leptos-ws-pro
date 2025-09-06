@@ -3,6 +3,8 @@
 //! Provides compile-time guarantees for all WebSocket communications through
 //! procedural macros and trait-based routing.
 
+pub mod advanced;
+
 use async_trait::async_trait;
 use futures::Stream;
 use leptos::prelude::*;

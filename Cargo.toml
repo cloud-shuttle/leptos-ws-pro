@@ -1,6 +1,6 @@
 [package]
 name = "leptos-ws-pro"
-version = "0.4.0-alpha"
+version = "0.5.0-alpha"
 edition = "2024"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]
@@ -85,6 +85,9 @@ jsonwebtoken = { version = "9.3", optional = true }
 num-bigint = { version = "0.4", optional = true }
 json-patch = { version = "4.0", optional = true }
 
+# Advanced RPC features
+uuid = { version = "1.18", features = ["v4"], optional = true }
+
 # Development and testing
 tempfile = { version = "3.21", optional = true }
 criterion = { version = "0.7", features = ["html_reports"], optional = true }
@@ -112,6 +115,9 @@ auth = ["dep:jsonwebtoken"]
 encryption = ["dep:ring"]
 metrics = ["dep:metrics", "dep:metrics-exporter-prometheus"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
+
+# Advanced RPC features
+advanced-rpc = ["uuid"]
 
 # Development and testing
 dev = ["dep:tempfile", "dep:criterion"]
@@ -172,6 +178,14 @@ path = "tests/unit/adaptive_transport_tests.rs"
 [[test]]
 name = "comprehensive_transport_tests"
 path = "tests/unit/comprehensive_transport_tests.rs"
+
+[[test]]
+name = "advanced_rpc_tests"
+path = "tests/unit/advanced_rpc_tests.rs"
+
+[[test]]
+name = "advanced_rpc_simple_tests"
+path = "tests/unit/advanced_rpc_simple_tests.rs"
 
 # [[bench]]
 # name = "codec_bench"

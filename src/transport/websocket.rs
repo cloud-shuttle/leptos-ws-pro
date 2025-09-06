@@ -218,7 +218,8 @@ mod tests {
         let config = TransportConfig::default();
         let connection = WebSocketConnection {
             config,
-            state: ConnectionState::Disconnected,
+            state: Arc::new(Mutex::new(ConnectionState::Disconnected)),
+            stream: None,
         };
 
         let caps = connection.capabilities();

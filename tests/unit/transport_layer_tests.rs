@@ -84,7 +84,7 @@ async fn test_websocket_transport_message_flow() {
         message_type: MessageType::Text,
     };
 
-    let (mut stream, mut sink) = transport.split().await.unwrap();
+    let (mut stream, mut sink) = transport.split();
 
     // Send message (will fail since not implemented)
     let send_result = sink.send(test_msg.clone()).await;
@@ -132,8 +132,8 @@ async fn test_adaptive_transport_selection() {
     let mut transport = AdaptiveTransport::new(config).await.unwrap();
 
     // Test capability detection
-    let capabilities = transport.capabilities();
-    assert!(capabilities.websocket);
+    let capabilities = AdaptiveTransport::detect_capabilities().await;
+    assert!(capabilities.websocket_supported);
 
     // Test connection (will fail without real server)
     let result = transport.connect("ws://localhost:8080").await;

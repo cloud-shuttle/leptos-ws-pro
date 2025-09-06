@@ -67,6 +67,7 @@ pub trait RpcService: Send + Sync + 'static {
 }
 
 /// RPC client for making type-safe calls
+#[allow(dead_code)]
 pub struct RpcClient<T> {
     context: WebSocketContext,
     codec: JsonCodec,
@@ -180,6 +181,7 @@ where
 }
 
 /// RPC subscription stream
+#[allow(dead_code)]
 pub struct RpcSubscription<T> {
     pub id: String,
     context: WebSocketContext,
@@ -225,7 +227,7 @@ macro_rules! rpc_service {
             $(
                 $(#[$attr])*
                 pub async fn $method_name(
-                    params: $params,
+                    _params: $params,
                 ) -> Result<$return_type, RpcError> {
                     // Implementation would be generated here
                     todo!("Generated implementation for {}", stringify!($method_name))
@@ -235,7 +237,7 @@ macro_rules! rpc_service {
     };
 }
 
-/// Example RPC service definition
+// Example RPC service definition
 rpc_service! {
     ChatService {
         send_message(SendMessageParams) -> MessageId,
@@ -330,7 +332,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_chat_service_definition() {
-        let params = SendMessageParams {
+        let _params = SendMessageParams {
             room_id: "room1".to_string(),
             content: "Hello, World!".to_string(),
         };

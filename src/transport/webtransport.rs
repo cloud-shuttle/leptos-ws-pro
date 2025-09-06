@@ -8,6 +8,7 @@ use tokio::sync::mpsc;
 use reqwest::Client;
 
 /// WebTransport connection implementation
+#[allow(dead_code)]
 pub struct WebTransportConnection {
     config: TransportConfig,
     state: Arc<Mutex<ConnectionState>>,

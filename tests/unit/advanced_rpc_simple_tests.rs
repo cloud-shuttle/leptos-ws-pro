@@ -2,9 +2,11 @@
 //!
 //! These tests focus on core RPC functionality without server setup to avoid hanging issues.
 
+#[cfg(feature = "advanced-rpc")]
 use leptos_ws_pro::rpc::advanced::*;
-use std::time::Duration;
 
+#[cfg(feature = "advanced-rpc")]
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_message_serialization() {
     // Test RPC request serialization/deserialization
@@ -35,6 +37,7 @@ async fn test_rpc_message_serialization() {
     assert!(deserialized_response.error.is_none());
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_error_serialization() {
     // Test RPC error response serialization
@@ -53,6 +56,7 @@ async fn test_rpc_error_serialization() {
     assert_eq!(deserialized.error.unwrap(), "Method not found");
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_correlation_manager_basic() {
     let manager = RpcCorrelationManager::new(Duration::from_secs(5));
@@ -79,6 +83,7 @@ async fn test_rpc_correlation_manager_basic() {
     assert!(response.result.is_some());
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_correlation_manager_timeout() {
     let manager = RpcCorrelationManager::new(Duration::from_millis(10));
@@ -108,6 +113,7 @@ async fn test_rpc_correlation_manager_timeout() {
     }
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_method_registry() {
     let mut registry = RpcMethodRegistry::new();
@@ -128,6 +134,7 @@ async fn test_rpc_method_registry() {
     assert_eq!(response["params"]["input"], "test");
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_method_registry_unknown_method() {
     let registry = RpcMethodRegistry::new();
@@ -144,6 +151,7 @@ async fn test_rpc_method_registry_unknown_method() {
     }
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_request_id_generation() {
     // Test that request IDs are unique
@@ -162,6 +170,7 @@ async fn test_rpc_request_id_generation() {
     assert_eq!(ids.len(), 100);
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_performance_metrics() {
     // Test RPC performance by measuring request/response times
@@ -186,6 +195,7 @@ async fn test_rpc_performance_metrics() {
     assert!(elapsed.as_millis() < 10);
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_error_codes() {
     // Test RPC error types
@@ -203,6 +213,7 @@ async fn test_rpc_error_codes() {
     assert!(serde_json::to_string(&internal_error).unwrap().contains("InternalError"));
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_correlation_manager_multiple_requests() {
     let manager = RpcCorrelationManager::new(Duration::from_secs(5));
@@ -246,6 +257,7 @@ async fn test_rpc_correlation_manager_multiple_requests() {
     }
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_method_registry_multiple_methods() {
     let mut registry = RpcMethodRegistry::new();
@@ -273,6 +285,7 @@ async fn test_rpc_method_registry_multiple_methods() {
     assert_eq!(multiply_result.unwrap()["product"], 24);
 }
 
+#[cfg(feature = "advanced-rpc")]
 #[tokio::test]
 async fn test_rpc_batch_processing() {
     // Test batch RPC request structure

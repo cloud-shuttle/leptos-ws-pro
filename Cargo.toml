@@ -1,6 +1,6 @@
 [package]
 name = "leptos-ws-pro"
-version = "0.5.0-alpha"
+version = "0.5.1-alpha"
 edition = "2024"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]
@@ -186,6 +186,10 @@ path = "tests/unit/advanced_rpc_tests.rs"
 [[test]]
 name = "advanced_rpc_simple_tests"
 path = "tests/unit/advanced_rpc_simple_tests.rs"
+
+[[test]]
+name = "compilation_warnings_tests"
+path = "tests/unit/compilation_warnings_tests.rs"
 
 # [[bench]]
 # name = "codec_bench"

@@ -11,6 +11,7 @@ use tokio::net::TcpStream;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
 
 /// WebSocket connection implementation
+#[allow(dead_code)]
 pub struct WebSocketConnection {
     config: TransportConfig,
     state: Arc<Mutex<ConnectionState>>,

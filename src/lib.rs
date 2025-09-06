@@ -19,7 +19,7 @@ use leptos::prelude::*;
 use std::sync::{Arc, Mutex};
 // use leptos_use::{use_websocket_with_options, UseWebSocketOptions, UseWebSocketReturn};
 // use leptos_use::core::ConnectionReadyState;
-use crate::codec::JsonCodec as JsonSerdeCodec;
+// use crate::codec::JsonCodec as JsonSerdeCodec; // TODO: Remove when used
 
 // Core modules
 pub mod codec;
@@ -121,6 +121,7 @@ struct ServerSignalWebSocket {
     delayed_msgs: Arc<Mutex<Vec<Messages>>>,
 }
 #[cfg(not(feature = "ssr"))]
+#[allow(dead_code)]
 impl ServerSignalWebSocket {
     pub fn send(&self, msg: &Messages) -> Result<(), serde_json::Error> {
         if self.ready_state.get() != ConnectionState::Connected {

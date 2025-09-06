@@ -9,10 +9,8 @@ use leptos_ws_pro::transport::{
     websocket::WebSocketConnection,
 };
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 use tokio::net::TcpListener;
 use tokio_tungstenite::accept_async;
-use tokio_tungstenite::tungstenite::Message as WsMessage;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 struct TestMessage {

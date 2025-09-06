@@ -6,8 +6,8 @@
 
 use async_trait::async_trait;
 use futures::{Sink, Stream};
-use std::error::Error as StdError;
-use std::fmt;
+// use std::error::Error as StdError; // TODO: Remove when used
+// use std::fmt; // TODO: Remove when used
 use std::pin::Pin;
 
 pub mod adaptive;

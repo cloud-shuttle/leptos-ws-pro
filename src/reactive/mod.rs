@@ -6,12 +6,12 @@
 
 use futures_util::{SinkExt, StreamExt};
 use leptos::prelude::*;
-use leptos::task::spawn_local;
+// use leptos::task::spawn_local; // TODO: Remove when used
 use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::{HashMap, VecDeque};
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio::sync::Mutex;
 use tokio_tungstenite::{connect_async, tungstenite::Message as WsMessage};
 
@@ -76,6 +76,7 @@ impl WebSocketProvider {
 
 /// WebSocket context that provides reactive access to connection state
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct WebSocketContext {
     url: String,
     state: ReadSignal<ConnectionState>,

@@ -1,8 +1,7 @@
 use leptos_ws_pro::{
     codec::JsonCodec,
     reactive::WebSocketContext,
-    rpc::{RpcClient, RpcError},
-    transport::{ConnectionState, TransportError},
+    rpc::RpcClient,
 };
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -60,7 +59,7 @@ async fn test_websocket_connection_state_tracking() {
 async fn test_heartbeat_mechanism() {
     // Test heartbeat/ping-pong mechanism
     let ws_context = WebSocketContext::new_with_url("ws://localhost:8080");
-    let codec = JsonCodec::new();
+    let _codec = JsonCodec::new();
 
     // Connect first
     let result = ws_context.connect().await;
@@ -146,7 +145,7 @@ async fn test_connection_health_monitoring() {
         content: "Health check".to_string(),
     };
 
-    let result = ws_context.send_message(&test_msg).await;
+    let _result = ws_context.send_message(&test_msg).await;
     assert!(result.is_ok());
 
     // In a real implementation, we would monitor response times and connection quality
@@ -172,7 +171,7 @@ async fn test_graceful_shutdown() {
     };
 
     // This should fail or be queued for next connection
-    let result = ws_context.send_message(&test_msg).await;
+    let _result = ws_context.send_message(&test_msg).await;
     // For now, we don't have proper connection state checking, so this might succeed
     // In a real implementation, this should fail or queue the message
 }

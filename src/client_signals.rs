@@ -16,6 +16,7 @@ pub struct ClientSignals {
     signals: Arc<RwLock<HashMap<String, Arc<Box<dyn ClientSignalTrait + Send + Sync>>>>>,
 }
 
+#[allow(dead_code)]
 impl ClientSignals {
     pub fn new() -> Self {
         let signals = Arc::new(RwLock::new(HashMap::new()));

@@ -1,6 +1,6 @@
 use crate::transport::{ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError};
 use async_trait::async_trait;
-use futures::{Sink, SinkExt, Stream, StreamExt};
+use futures::{Sink, SinkExt, Stream};
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
@@ -8,6 +8,7 @@ use reqwest::Client;
 use tokio::sync::mpsc;
 
 /// Server-Sent Events connection implementation
+#[allow(dead_code)]
 pub struct SseConnection {
     config: TransportConfig,
     state: Arc<Mutex<ConnectionState>>,
@@ -34,6 +35,7 @@ impl SseConnection {
         *self.state.lock().unwrap()
     }
 
+    #[allow(dead_code)]
     async fn parse_sse_event(&self, line: &str) -> Option<Message> {
         if line.trim().is_empty() {
             return None;

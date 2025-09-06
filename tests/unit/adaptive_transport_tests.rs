@@ -71,7 +71,7 @@ async fn test_adaptive_transport_capability_detection() {
         url: "ws://127.0.0.1:8080".to_string(),
         ..Default::default()
     };
-    let transport = AdaptiveTransport::new(config).await.unwrap();
+    let _transport = AdaptiveTransport::new(config).await.unwrap();
 
     // When: Checking capabilities
     let capabilities = AdaptiveTransport::detect_capabilities().await;
@@ -314,8 +314,9 @@ async fn test_adaptive_transport_performance_monitoring() {
 
     // Then: Should have performance metrics
     assert!(metrics.connection_count >= 1);
-    assert!(metrics.message_count >= 0);
-    assert!(metrics.error_count >= 0);
+    // Metrics should be non-negative (u64 is always >= 0)
+    // assert!(metrics.message_count >= 0);
+    // assert!(metrics.error_count >= 0);
 }
 
 #[tokio::test]
@@ -325,7 +326,7 @@ async fn test_adaptive_transport_dynamic_switching() {
         url: "ws://127.0.0.1:8080".to_string(),
         ..Default::default()
     };
-    let mut transport = AdaptiveTransport::new(config).await.unwrap();
+    let transport = AdaptiveTransport::new(config).await.unwrap();
 
     // When: Checking if dynamic switching is supported
     let can_switch = transport.can_switch_transport();

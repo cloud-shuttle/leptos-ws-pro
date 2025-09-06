@@ -3,9 +3,9 @@
 //! These tests drive the implementation of SSE connections
 //! for real-time server-to-client communication.
 
-use futures::{SinkExt, StreamExt};
+use futures::StreamExt;
 use leptos_ws_pro::transport::{
-    ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError,
+    ConnectionState, MessageType, Transport, TransportConfig, TransportError,
     sse::SseConnection,
 };
 use serde::{Deserialize, Serialize};

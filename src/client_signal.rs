@@ -6,11 +6,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::{
     any::Any,
-    ops::{Deref, DerefMut},
+    ops::Deref,
     sync::{Arc, RwLock},
 };
 
 #[derive(Clone, Debug)]
+#[allow(dead_code)]
 pub struct ClientSignal<T>
 where
     T: Clone + Send + Sync + for<'de> Deserialize<'de>,
@@ -20,6 +21,7 @@ where
 }
 
 #[async_trait]
+#[allow(dead_code)]
 pub trait ClientSignalTrait {
     fn as_any(&self) -> &dyn Any;
     fn update_json(&self, patch: ServerSignalUpdate) -> Result<(), Error>;

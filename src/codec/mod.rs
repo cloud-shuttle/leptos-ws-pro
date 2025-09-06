@@ -129,7 +129,7 @@ where
                 // Fall back to rkyv
                 match self.rkyv_codec.decode(data) {
                     Ok(result) => Ok(result),
-                    Err(e) => {
+                    Err(_e) => {
                         // If both fail, return the JSON error
                         self.json_codec.decode(data)
                     }

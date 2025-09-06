@@ -5,10 +5,8 @@
 use futures::{SinkExt, StreamExt};
 use leptos_ws_pro::*;
 use serde::{Deserialize, Serialize};
-use std::net::TcpStream;
 use tokio::net::TcpListener;
 use tokio_tungstenite::accept_async;
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 struct TestMessage {
@@ -154,7 +152,7 @@ async fn test_websocket_reconnection() {
     assert_eq!(ws_context.connection_state(), ConnectionState::Connected);
 
     // Simulate connection loss
-    ws_context.disconnect().await;
+    let _ = ws_context.disconnect().await;
     assert_eq!(ws_context.connection_state(), ConnectionState::Disconnected);
 
     // Reconnect

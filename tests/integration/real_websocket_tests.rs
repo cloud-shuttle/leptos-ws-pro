@@ -56,7 +56,7 @@ async fn test_real_websocket_connection() {
 
     // Verify the error is a real WebSocket connection error, not a simulated one
     match result {
-        Err(TransportError::ConnectionFailed(msg)) => {
+        Err(TransportError::ConnectionFailed(ref msg)) => {
             assert!(
                 msg.contains("WebSocket connection failed"),
                 "Expected real WebSocket error, got: {}",
@@ -76,7 +76,7 @@ async fn test_real_websocket_connection() {
         timestamp: chrono::Utc::now().timestamp() as u64,
     };
 
-    let result = ws_context.send_message(&test_msg).await;
+    let _result = ws_context.send_message(&test_msg).await;
     assert!(
         result.is_err(),
         "Expected send to fail when not connected: {:?}",
@@ -136,7 +136,7 @@ async fn test_websocket_reconnection_after_failure() {
         timestamp: chrono::Utc::now().timestamp() as u64,
     };
 
-    let result = ws_context.send_message(&test_msg).await;
+    let _result = ws_context.send_message(&test_msg).await;
     assert!(result.is_ok(), "Failed to send message after reconnection");
 }
 
@@ -282,7 +282,7 @@ async fn test_websocket_error_handling() {
         timestamp: 1,
     };
 
-    let result = ws_context.send_message(&test_msg).await;
+    let _result = ws_context.send_message(&test_msg).await;
     // This might succeed (queuing) or fail depending on implementation
     // We'll define the expected behavior in the implementation
 }
@@ -339,7 +339,7 @@ async fn test_websocket_concurrent_connections() {
                 timestamp: chrono::Utc::now().timestamp() as u64,
             };
 
-            let result = ws_context.send_message(&test_msg).await;
+            let _result = ws_context.send_message(&test_msg).await;
             assert!(result.is_ok(), "Send failed for connection {}", i);
 
             // Receive response
@@ -378,7 +378,7 @@ async fn test_websocket_rpc_over_real_connection() {
         params: serde_json::json!({"message": "Hello, RPC!"}),
     };
 
-    let result: Result<RpcResponse, RpcError> = client.call("echo", request, RpcMethod::Call).await;
+    let _result: Result<RpcResponse, RpcError> = client.call("echo", request, RpcMethod::Call).await;
     // This will likely fail with "not implemented" for now, but we'll implement it
     // assert!(result.is_ok(), "RPC call failed: {:?}", result);
 

@@ -3,7 +3,7 @@
 //! These tests verify that all transport implementations work together
 //! and that the adaptive transport can successfully fallback between them.
 
-use futures::{SinkExt, StreamExt};
+// use futures::StreamExt; // TODO: Remove when used
 use leptos_ws_pro::transport::{
     ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError,
     websocket::WebSocketConnection,
@@ -123,22 +123,22 @@ async fn test_all_transport_split() {
 
     // Test WebSocket split
     let ws = WebSocketConnection::new(config.clone()).await.unwrap();
-    let (ws_stream, ws_sink) = ws.split();
+    let (ws_stream, _ws_sink) = ws.split();
     assert!(ws_stream.size_hint().0 == 0); // Empty stream when not connected
 
     // Test SSE split
     let sse = SseConnection::new(config.clone()).await.unwrap();
-    let (sse_stream, sse_sink) = sse.split();
+    let (sse_stream, _sse_sink) = sse.split();
     assert!(sse_stream.size_hint().0 == 0); // Empty stream when not connected
 
     // Test WebTransport split
     let wt = WebTransportConnection::new(config.clone()).await.unwrap();
-    let (wt_stream, wt_sink) = wt.split();
+    let (wt_stream, _wt_sink) = wt.split();
     assert!(wt_stream.size_hint().0 == 0); // Empty stream when not connected
 
     // Test Adaptive Transport split
     let adaptive = AdaptiveTransport::new(config.clone()).await.unwrap();
-    let (adaptive_stream, adaptive_sink) = adaptive.split();
+    let (adaptive_stream, _adaptive_sink) = adaptive.split();
     assert!(adaptive_stream.size_hint().0 == 0); // Empty stream when not connected
 }
 

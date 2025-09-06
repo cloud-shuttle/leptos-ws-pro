@@ -1,5 +1,5 @@
 //! Connection resilience and recovery for leptos-ws
-//! 
+//!
 //! Provides sophisticated connection management with automatic recovery mechanisms,
 //! circuit breakers, and health monitoring.
 
@@ -70,7 +70,7 @@ impl CircuitBreaker {
             timeout,
         }
     }
-    
+
     pub async fn should_trip(&self) -> bool {
         let state = *self.state.read().await;
         match state {
@@ -89,25 +89,25 @@ impl CircuitBreaker {
             CircuitState::HalfOpen => false,
         }
     }
-    
+
     pub async fn record_success(&self) {
         let mut success_count = self.success_count.lock().await;
         *success_count += 1;
-        
+
         if *success_count >= self.success_threshold {
             let mut state = self.state.write().await;
             *state = CircuitState::Closed;
             *self.failure_count.lock().await = 0;
         }
     }
-    
+
     pub async fn record_failure(&self) {
         let mut failure_count = self.failure_count.lock().await;
         *failure_count += 1;
-        
+
         let mut last_failure = self.last_failure.lock().await;
         *last_failure = Some(Instant::now());
-        
+
         if *failure_count >= self.failure_threshold {
             let mut state = self.state.write().await;
             *state = CircuitState::Open;
@@ -130,12 +130,12 @@ impl HealthMonitor {
             timeout,
         }
     }
-    
+
     pub async fn record_heartbeat(&self) {
         let mut last = self.last_heartbeat.lock().await;
         *last = Some(Instant::now());
     }
-    
+
     pub async fn is_healthy(&self) -> bool {
         let last = *self.last_heartbeat.lock().await;
         if let Some(last_heartbeat) = last {
@@ -144,7 +144,7 @@ impl HealthMonitor {
             false
         }
     }
-    
+
     pub async fn check(&self) -> HealthStatus {
         if self.is_healthy().await {
             HealthStatus::Healthy
@@ -174,7 +174,7 @@ impl<T> MessageBuffer<T> {
             max_size,
         }
     }
-    
+
     pub async fn push(&self, message: T) -> Result<(), BufferError> {
         let mut buffer = self.buffer.lock().await;
         if buffer.len() >= self.max_size {
@@ -183,21 +183,21 @@ impl<T> MessageBuffer<T> {
         buffer.push(message);
         Ok(())
     }
-    
+
     pub async fn pop(&self) -> Option<T> {
         let mut buffer = self.buffer.lock().await;
         buffer.pop()
     }
-    
+
     pub async fn len(&self) -> usize {
         let buffer = self.buffer.lock().await;
         buffer.len()
     }
-    
+
     pub async fn is_empty(&self) -> bool {
         self.len().await == 0
     }
-    
+
     pub async fn clear(&self) {
         let mut buffer = self.buffer.lock().await;
         buffer.clear();
@@ -243,7 +243,7 @@ impl<T> ResilientConnection<T> {
             connection_state: Arc::new(RwLock::new(ConnectionState::Disconnected)),
         }
     }
-    
+
     pub async fn maintain_connection(&mut self) {
         loop {
             tokio::select! {
@@ -258,11 +258,11 @@ impl<T> ResilientConnection<T> {
             }
         }
     }
-    
+
     async fn initiate_reconnection(&mut self) {
         let mut state = self.connection_state.write().await;
         *state = ConnectionState::Reconnecting;
-        
+
         // Implement reconnection logic based on strategy
         match &self.strategy {
             ReconnectionStrategy::ExponentialBackoff { initial, max, jitter } => {
@@ -282,7 +282,7 @@ impl<T> ResilientConnection<T> {
                 return;
             }
         }
-        
+
         // Attempt reconnection
         if let Err(_) = self.connect().await {
             self.circuit_breaker.record_failure().await;
@@ -291,12 +291,12 @@ impl<T> ResilientConnection<T> {
             *state = ConnectionState::Connected;
         }
     }
-    
+
     async fn connect(&self) -> Result<(), ConnectionError> {
         // Placeholder for actual connection logic
         Ok(())
     }
-    
+
     async fn flush_buffer(&self) {
         while !self.message_buffer.is_empty().await {
             if let Some(message) = self.message_buffer.pop().await {
@@ -312,10 +312,10 @@ impl<T> ResilientConnection<T> {
 pub enum ConnectionError {
     #[error("Connection failed: {0}")]
     ConnectionFailed(String),
-    
+
     #[error("Timeout: {0}")]
     Timeout(String),
-    
+
     #[error("Circuit breaker open")]
     CircuitBreakerOpen,
 }
@@ -323,59 +323,59 @@ pub enum ConnectionError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_circuit_breaker() {
         let breaker = CircuitBreaker::new(3, 2, Duration::from_secs(1));
-        
+
         // Should not trip initially
         assert!(!breaker.should_trip().await);
-        
+
         // Record failures
         breaker.record_failure().await;
         breaker.record_failure().await;
         breaker.record_failure().await;
-        
+
         // Should trip after threshold
         assert!(breaker.should_trip().await);
     }
-    
+
     #[tokio::test]
     async fn test_health_monitor() {
         let monitor = HealthMonitor::new(
             Duration::from_secs(1),
             Duration::from_secs(5),
         );
-        
+
         // Initially unhealthy
         assert_eq!(monitor.check().await, HealthStatus::Unhealthy);
-        
+
         // Record heartbeat
         monitor.record_heartbeat().await;
         assert_eq!(monitor.check().await, HealthStatus::Healthy);
     }
-    
+
     #[tokio::test]
     async fn test_message_buffer() {
         let buffer = MessageBuffer::new(10);
-        
+
         assert!(buffer.is_empty().await);
-        
+
         // Push messages
         for i in 0..5 {
             buffer.push(i).await.unwrap();
         }
-        
+
         assert_eq!(buffer.len().await, 5);
-        
+
         // Pop messages
         for i in (0..5).rev() {
             assert_eq!(buffer.pop().await, Some(i));
         }
-        
+
         assert!(buffer.is_empty().await);
     }
-    
+
     #[test]
     fn test_reconnection_strategy_default() {
         let strategy = ReconnectionStrategy::default();

@@ -1,13 +1,10 @@
 //! Basic WebSocket example demonstrating core functionality
-//! 
+//!
 //! This example shows how to use the basic WebSocket functionality
 //! with JSON codec for message serialization.
 
-use leptos_ws_pro::{
-    JsonCodec, WsMessage, Codec,
-    use_websocket, use_connection_status
-};
 use leptos::prelude::*;
+use leptos_ws_pro::{use_connection_status, use_websocket, Codec, JsonCodec, WsMessage};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -30,26 +27,26 @@ pub fn BasicWebSocketExample() -> impl IntoView {
     // Create WebSocket context
     let ws_context = use_websocket("ws://localhost:8080");
     let connection_status = use_connection_status(&ws_context);
-    
+
     // Test data - create inside closures to avoid move issues
 
     view! {
         <div class="websocket-example">
             <h2>"Basic WebSocket Example"</h2>
-            
+
             <div class="connection-status">
                 <h3>"Connection Status"</h3>
                 <p>
-                    "Status: " 
+                    "Status: "
                     <span class="status">
                         {move || format!("{:?}", connection_status.get())}
                     </span>
                 </p>
             </div>
-            
+
             <div class="codec-demo">
                 <h3>"JSON Codec Demo"</h3>
-                <button 
+                <button
                     on:click=move |_| {
                         // Test JSON codec
                         let test_message = ChatMessage {
@@ -70,10 +67,10 @@ pub fn BasicWebSocketExample() -> impl IntoView {
                     "Test JSON Codec"
                 </button>
             </div>
-            
+
             <div class="message-demo">
                 <h3>"Message Demo"</h3>
-                <button 
+                <button
                     on:click=move |_| {
                         // Test message wrapper
                         let test_message = ChatMessage {
@@ -94,10 +91,10 @@ pub fn BasicWebSocketExample() -> impl IntoView {
                     "Test Message Wrapper"
                 </button>
             </div>
-            
+
             <div class="context-demo">
                 <h3>"WebSocket Context Demo"</h3>
-                <button 
+                <button
                     on:click=move |_| {
                         // Test context functionality
                         let ws_context = use_websocket("ws://localhost:8080");
@@ -111,10 +108,10 @@ pub fn BasicWebSocketExample() -> impl IntoView {
                     "Test Context"
                 </button>
             </div>
-            
+
             <div class="metrics-demo">
                 <h3>"Metrics Demo"</h3>
-                <button 
+                <button
                     on:click=move |_| {
                         // Test metrics
                         let ws_context = use_websocket("ws://localhost:8080");

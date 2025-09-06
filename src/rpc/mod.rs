@@ -1,5 +1,5 @@
 //! Type-safe RPC layer for leptos-ws
-//! 
+//!
 //! Provides compile-time guarantees for all WebSocket communications through
 //! procedural macros and trait-based routing.
 
@@ -51,7 +51,7 @@ pub struct RpcError {
 #[async_trait]
 pub trait RpcService: Send + Sync + 'static {
     type Context;
-    
+
     async fn handle_request<T, R>(
         &self,
         method: &str,
@@ -83,45 +83,33 @@ where
             _phantom: std::marker::PhantomData,
         }
     }
-    
+
     pub fn context(&self) -> &WebSocketContext {
         &self.context
     }
-    
+
     pub fn context_mut(&mut self) -> &mut WebSocketContext {
         &mut self.context
     }
-    
+
     /// Make a query call
-    pub async fn query<R>(
-        &self,
-        method: &str,
-        params: T,
-    ) -> Result<R, RpcError>
+    pub async fn query<R>(&self, method: &str, params: T) -> Result<R, RpcError>
     where
         R: for<'de> Deserialize<'de> + Send + 'static,
     {
         self.call(method, params, RpcMethod::Query).await
     }
-    
+
     /// Make a mutation call
-    pub async fn mutation<R>(
-        &self,
-        method: &str,
-        params: T,
-    ) -> Result<R, RpcError>
+    pub async fn mutation<R>(&self, method: &str, params: T) -> Result<R, RpcError>
     where
         R: for<'de> Deserialize<'de> + Send + 'static,
     {
         self.call(method, params, RpcMethod::Mutation).await
     }
-    
+
     /// Subscribe to a stream
-    pub fn subscribe<R>(
-        &self,
-        method: &str,
-        params: &T,
-    ) -> RpcSubscription<R>
+    pub fn subscribe<R>(&self, method: &str, params: &T) -> RpcSubscription<R>
     where
         R: for<'de> Deserialize<'de> + Clone + Send + Sync + 'static,
     {
@@ -132,21 +120,21 @@ where
             params: params.clone(),
             method_type: RpcMethod::Subscription,
         };
-        
+
         let wrapped = WsMessage::new(request);
-        
+
         // Send subscription request
         // Note: In a real implementation, this would need to be async
         // For now, we'll just store the message
         let _ = serde_json::to_vec(&wrapped);
-        
+
         RpcSubscription {
             id,
             context: self.context.clone(),
             _phantom: std::marker::PhantomData,
         }
     }
-    
+
     pub async fn call<R>(
         &self,
         method: &str,
@@ -163,14 +151,14 @@ where
             params,
             method_type,
         };
-        
+
         let wrapped = WsMessage::new(request);
-        
+
         // Send request
         // Note: In a real implementation, this would need to be async
         // For now, we'll just store the message
         let _ = serde_json::to_vec(&wrapped);
-        
+
         // Wait for response (simplified - in real implementation, you'd use a channel)
         // This is a placeholder for the actual response handling
         Err(RpcError {
@@ -179,9 +167,11 @@ where
             data: None,
         })
     }
-    
+
     pub fn generate_id(&self) -> String {
-        let id = self.next_id.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+        let id = self
+            .next_id
+            .fetch_add(1, std::sync::atomic::Ordering::SeqCst);
         format!("rpc_{}", id)
     }
 }
@@ -198,7 +188,7 @@ where
     T: for<'de> Deserialize<'de> + Clone + Send + Sync + 'static,
 {
     type Item = Result<T, RpcError>;
-    
+
     fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
         // This is a simplified implementation
         // In a real implementation, you'd filter messages by subscription ID
@@ -227,7 +217,7 @@ macro_rules! rpc_service {
         }
     ) => {
         pub struct $service_name;
-        
+
         impl $service_name {
             $(
                 $(#[$attr])*
@@ -284,22 +274,18 @@ pub struct ChatMessage {
 
 /// Component for using RPC in Leptos
 #[component]
-pub fn RpcProvider(
-    children: Children,
-    context: WebSocketContext,
-) -> impl IntoView
-{
+pub fn RpcProvider(children: Children, context: WebSocketContext) -> impl IntoView {
     // For now, we'll provide a simple context
     // In a real implementation, this would create an RpcClient
     provide_context(context);
-    
+
     children()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_rpc_request_creation() {
         let request = RpcRequest {
@@ -308,12 +294,12 @@ mod tests {
             params: "test_params",
             method_type: RpcMethod::Query,
         };
-        
+
         assert_eq!(request.id, "test_id");
         assert_eq!(request.method, "test_method");
         assert_eq!(request.method_type, RpcMethod::Query);
     }
-    
+
     #[test]
     fn test_rpc_response_creation() {
         let response = RpcResponse {
@@ -321,12 +307,12 @@ mod tests {
             result: Some("test_result"),
             error: None,
         };
-        
+
         assert_eq!(response.id, "test_id");
         assert_eq!(response.result, Some("test_result"));
         assert!(response.error.is_none());
     }
-    
+
     #[test]
     fn test_rpc_error_creation() {
         let error = RpcError {
@@ -334,18 +320,18 @@ mod tests {
             message: "Not found".to_string(),
             data: None,
         };
-        
+
         assert_eq!(error.code, 404);
         assert_eq!(error.message, "Not found");
     }
-    
+
     #[tokio::test]
     async fn test_chat_service_definition() {
         let params = SendMessageParams {
             room_id: "room1".to_string(),
             content: "Hello, World!".to_string(),
         };
-        
+
         // This would call the generated implementation
         // let result = ChatService::send_message(params).await;
         // assert!(result.is_ok());

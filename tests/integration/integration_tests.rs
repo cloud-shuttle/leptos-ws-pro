@@ -53,7 +53,7 @@ async fn test_messages_roundtrip_serialization() {
     let establish_msg = messages::Messages::ServerSignal(
         messages::ServerSignalMessage::Establish("test_signal".to_string())
     );
-    
+
     let serialized = serde_json::to_string(&establish_msg).unwrap();
     let deserialized: messages::Messages = serde_json::from_str(&serialized).unwrap();
     assert_eq!(establish_msg, deserialized);
@@ -65,7 +65,7 @@ async fn test_messages_roundtrip_serialization() {
             json!({"value": 42}),
         ))
     );
-    
+
     let serialized = serde_json::to_string(&response_msg).unwrap();
     let deserialized: messages::Messages = serde_json::from_str(&serialized).unwrap();
     assert_eq!(response_msg, deserialized);
@@ -77,7 +77,7 @@ async fn test_messages_roundtrip_serialization() {
     let update_msg = messages::Messages::ServerSignal(
         messages::ServerSignalMessage::Update(update)
     );
-    
+
     let serialized = serde_json::to_string(&update_msg).unwrap();
     let deserialized: messages::Messages = serde_json::from_str(&serialized).unwrap();
     assert_eq!(update_msg, deserialized);
@@ -111,7 +111,7 @@ async fn test_json_patch_operations() {
     // Test simple value change
     let old_json = json!({"value": 10, "name": "test"});
     let new_json = json!({"value": 20, "name": "test"});
-    
+
     let update = messages::ServerSignalUpdate::new_from_json("test_signal", &old_json, &new_json);
     assert_eq!(update.name, "test_signal");
     assert!(!update.patch.0.is_empty());
@@ -124,7 +124,7 @@ async fn test_json_patch_operations() {
     // Test adding new field
     let old_json = json!({"value": 10});
     let new_json = json!({"value": 10, "name": "test"});
-    
+
     let update = messages::ServerSignalUpdate::new_from_json("test_signal", &old_json, &new_json);
     assert_eq!(update.name, "test_signal");
     assert!(!update.patch.0.is_empty());
@@ -132,7 +132,7 @@ async fn test_json_patch_operations() {
     // Test removing field
     let old_json = json!({"value": 10, "name": "test"});
     let new_json = json!({"value": 10});
-    
+
     let update = messages::ServerSignalUpdate::new_from_json("test_signal", &old_json, &new_json);
     assert_eq!(update.name, "test_signal");
     assert!(!update.patch.0.is_empty());
@@ -241,7 +241,7 @@ async fn test_concurrent_operations() {
         .collect();
 
     let results = futures::future::join_all(handles).await;
-    
+
     for (i, result) in results.into_iter().enumerate() {
         let update = result.unwrap();
         assert_eq!(update.name, format!("signal_{}", i));

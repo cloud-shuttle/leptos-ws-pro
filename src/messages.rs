@@ -137,7 +137,8 @@ mod tests {
     #[test]
     fn test_messages_serialization() {
         // Arrange
-        let establish_msg = Messages::ServerSignal(ServerSignalMessage::Establish("test".to_string()));
+        let establish_msg =
+            Messages::ServerSignal(ServerSignalMessage::Establish("test".to_string()));
         let old = json!({"value": 10});
         let new = json!({"value": 20});
         let update = ServerSignalUpdate::new_from_json("test_signal", &old, &new);

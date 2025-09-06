@@ -86,30 +86,30 @@
 <body>
     <div class="container">
         <h1>Leptos WS Test Application</h1>
-        
+
         <!-- Connection Status -->
         <div id="status" class="status disconnected">Disconnected</div>
-        
+
         <!-- Connection Controls -->
         <div>
             <button id="connect-btn">Connect</button>
             <button id="disconnect-btn" disabled>Disconnect</button>
             <button id="reconnect-btn" disabled>Reconnect</button>
         </div>
-        
+
         <!-- Server URL Input -->
         <div>
             <label for="server-url">Server URL:</label>
             <input type="text" id="server-url" value="ws://localhost:8080" style="width: 300px;">
         </div>
-        
+
         <!-- Message Controls -->
         <div>
             <input type="text" id="message-input" placeholder="Enter message..." disabled>
             <button id="send-btn" disabled>Send Message</button>
             <button id="send-heartbeat-btn" disabled>Send Heartbeat</button>
         </div>
-        
+
         <!-- Metrics -->
         <div class="metrics">
             <div class="metric">
@@ -129,14 +129,14 @@
                 <div class="metric-label">Reconnects</div>
             </div>
         </div>
-        
+
         <!-- Messages Display -->
         <div>
             <h3>Messages</h3>
             <div id="messages" class="messages"></div>
             <button id="clear-messages-btn">Clear Messages</button>
         </div>
-        
+
         <!-- RPC Testing -->
         <div>
             <h3>RPC Testing</h3>
@@ -144,7 +144,7 @@
             <button id="rpc-broadcast-btn" disabled>RPC Broadcast Test</button>
             <button id="rpc-stats-btn" disabled>RPC Get Stats</button>
         </div>
-        
+
         <!-- Error Display -->
         <div id="error-display" style="color: red; margin: 10px 0; display: none;"></div>
     </div>

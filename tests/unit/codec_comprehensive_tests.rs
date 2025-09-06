@@ -129,18 +129,18 @@ fn test_json_codec_unicode_text() {
 #[test]
 fn test_json_codec_error_handling() {
     let codec = JsonCodec::new();
-    
+
     // Test with invalid JSON
     let invalid_json = "invalid json {";
     let message = Message {
         data: invalid_json.as_bytes().to_vec(),
         message_type: MessageType::Text,
     };
-    
+
     // This should still work as we're just passing through the data
     let encoded = codec.encode(&message).unwrap();
     let decoded = codec.decode(&encoded).unwrap();
-    
+
     assert_eq!(message, decoded);
 }
 
@@ -191,19 +191,19 @@ fn test_rkyv_codec_performance() {
         data: serde_json::to_vec(&large_data).unwrap(),
         message_type: MessageType::Text,
     };
-    
+
     // Test encoding performance
     let start = std::time::Instant::now();
     let encoded = codec.encode(&message).unwrap();
     let encode_time = start.elapsed();
-    
+
     // Test decoding performance
     let start = std::time::Instant::now();
     let decoded = codec.decode(&encoded).unwrap();
     let decode_time = start.elapsed();
-    
+
     assert_eq!(message, decoded);
-    
+
     // Performance assertions (these are generous thresholds)
     assert!(encode_time.as_millis() < 100, "Encoding took too long: {:?}", encode_time);
     assert!(decode_time.as_millis() < 100, "Decoding took too long: {:?}", decode_time);
@@ -276,7 +276,7 @@ fn test_ws_message_serialization() {
     };
 
     let ws_message = WsMessage::new(test_data.clone());
-    
+
     // Test JSON serialization
     let json_encoded = serde_json::to_string(&ws_message).unwrap();
     let json_decoded: WsMessage<TestData> = serde_json::from_str(&json_encoded).unwrap();
@@ -306,12 +306,12 @@ fn test_codec_trait_consistency() {
 #[test]
 fn test_codec_error_recovery() {
     let codec = JsonCodec::new();
-    
+
     // Test with empty data
     let empty_data = vec![];
     let result: Result<Message, _> = codec.decode(&empty_data);
     assert!(result.is_err());
-    
+
     // Test with corrupted data
     let corrupted_data = vec![0xFF, 0xFE, 0xFD, 0xFC];
     let result: Result<Message, _> = codec.decode(&corrupted_data);
@@ -335,7 +335,7 @@ fn test_codec_concurrent_usage() {
             })
         })
         .collect();
-    
+
     for handle in handles {
         handle.join().unwrap();
     }
@@ -348,12 +348,12 @@ fn test_codec_memory_efficiency() {
         data: "x".repeat(100000).as_bytes().to_vec(), // 100KB string
         message_type: MessageType::Text,
     };
-    
+
     let encoded = codec.encode(&large_message).unwrap();
     let decoded = codec.decode(&encoded).unwrap();
-    
+
     assert_eq!(large_message, decoded);
-    
+
     // Verify that the encoded data is reasonable in size
     // (JSON encoding adds overhead, so we allow for more expansion)
     // The Message struct with serde adds significant overhead for large data
@@ -363,7 +363,7 @@ fn test_codec_memory_efficiency() {
 #[test]
 fn test_codec_type_safety() {
     let codec = JsonCodec::new();
-    
+
     // Test that we can't accidentally mix message types
     let text_message = Message {
         data: "Hello".as_bytes().to_vec(),
@@ -373,13 +373,13 @@ fn test_codec_type_safety() {
         data: vec![1, 2, 3],
         message_type: MessageType::Binary,
     };
-    
+
     let text_encoded = codec.encode(&text_message).unwrap();
     let binary_encoded = codec.encode(&binary_message).unwrap();
-    
+
     let text_decoded = codec.decode(&text_encoded).unwrap();
     let binary_decoded = codec.decode(&binary_encoded).unwrap();
-    
+
     assert_eq!(text_message, text_decoded);
     assert_eq!(binary_message, binary_decoded);
     assert_ne!(text_decoded, binary_decoded);

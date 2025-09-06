@@ -76,6 +76,7 @@ npx playwright test --project=webkit
 **Purpose**: Test basic WebSocket functionality in browsers
 
 **Coverage**:
+
 - Connection establishment and teardown
 - Message sending and receiving
 - Heartbeat functionality
@@ -90,6 +91,7 @@ npx playwright test --project=webkit
 **Purpose**: Test integration with real WebSocket servers
 
 **Coverage**:
+
 - Real WebSocket server communication
 - Server response handling
 - RPC request/response cycles
@@ -104,6 +106,7 @@ npx playwright test --project=webkit
 **Purpose**: Test complete user workflows
 
 **Coverage**:
+
 - Full communication flow
 - Connection failure and recovery
 - Reconnection scenarios
@@ -120,6 +123,7 @@ npx playwright test --project=webkit
 **Purpose**: Test performance and scalability
 
 **Coverage**:
+
 - High message throughput
 - Large message payloads
 - Concurrent message sending
@@ -135,26 +139,29 @@ npx playwright test --project=webkit
 ## 🎭 Browser Support
 
 ### Desktop Browsers
+
 - **Chrome/Chromium** ✅
 - **Firefox** ✅
 - **Safari/WebKit** ✅
 - **Microsoft Edge** ✅
 
 ### Mobile Browsers
+
 - **Mobile Chrome** ✅
 - **Mobile Safari** ✅
 
 ### Test Configuration
+
 ```typescript
 // playwright.config.ts
 projects: [
-  { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-  { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
-  { name: 'webkit', use: { ...devices['Desktop Safari'] } },
-  { name: 'Mobile Chrome', use: { ...devices['Pixel 5'] } },
-  { name: 'Mobile Safari', use: { ...devices['iPhone 12'] } },
-  { name: 'Microsoft Edge', use: { ...devices['Desktop Edge'] } },
-]
+  { name: "chromium", use: { ...devices["Desktop Chrome"] } },
+  { name: "firefox", use: { ...devices["Desktop Firefox"] } },
+  { name: "webkit", use: { ...devices["Desktop Safari"] } },
+  { name: "Mobile Chrome", use: { ...devices["Pixel 5"] } },
+  { name: "Mobile Safari", use: { ...devices["iPhone 12"] } },
+  { name: "Microsoft Edge", use: { ...devices["Desktop Edge"] } },
+];
 ```
 
 ## 🔧 Test Infrastructure
@@ -196,12 +203,14 @@ The test runner orchestrates the entire testing pipeline:
 ### Report Generation
 
 **HTML Report**: `tests/test-results/comprehensive-report.html`
+
 - Visual test results
 - Performance metrics
 - Coverage statistics
 - Recommendations
 
 **JSON Report**: `tests/test-results/comprehensive-report.json`
+
 - Machine-readable results
 - Detailed test data
 - Performance metrics
@@ -236,6 +245,7 @@ The test runner orchestrates the entire testing pipeline:
 ## 📈 Performance Metrics
 
 ### Test Coverage
+
 - **Total Tests**: 143+ tests
 - **Unit Tests**: 28 tests
 - **Integration Tests**: 89 tests
@@ -245,6 +255,7 @@ The test runner orchestrates the entire testing pipeline:
 - **Load Tests**: 15+ tests
 
 ### Performance Benchmarks
+
 - **Message Throughput**: 100+ messages/second
 - **Connection Stability**: 99.9% uptime
 - **Cross-Browser Support**: 6+ browsers
@@ -256,19 +267,21 @@ The test runner orchestrates the entire testing pipeline:
 ### Common Issues
 
 1. **Server Not Starting**
+
    ```bash
    # Check if port is available
    lsof -i :8080
-   
+
    # Kill existing processes
    pkill -f "cargo test"
    ```
 
 2. **Playwright Browser Issues**
+
    ```bash
    # Reinstall browsers
    npx playwright install --force
-   
+
    # Install system dependencies
    npx playwright install-deps
    ```
@@ -306,7 +319,7 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
-          node-version: '18'
+          node-version: "18"
       - uses: actions/setup-rust@v1
       - run: npm install
       - run: npx playwright install --with-deps

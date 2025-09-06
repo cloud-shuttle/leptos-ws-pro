@@ -1,5 +1,5 @@
 //! Test WebSocket server for integration testing
-//! 
+//!
 //! This module provides a real WebSocket server that can be used
 //! for testing the leptos_ws library with actual network communication.
 
@@ -52,22 +52,22 @@ impl TestWebSocketServer {
     pub async fn new() -> Result<Self, Box<dyn std::error::Error + Send + Sync>> {
         let listener = TcpListener::bind("127.0.0.1:0").await?;
         let addr = listener.local_addr()?;
-        
+
         let (shutdown_tx, _) = broadcast::channel(1);
         let connected_clients = Arc::new(RwLock::new(HashMap::new()));
-        
+
         let server_handle = {
             let shutdown_rx = shutdown_tx.subscribe();
             let clients = Arc::clone(&connected_clients);
-            
+
             tokio::spawn(async move {
                 Self::run_server(listener, shutdown_rx, clients).await;
             })
         };
-        
+
         // Give the server a moment to start
         tokio::time::sleep(Duration::from_millis(100)).await;
-        
+
         Ok(TestWebSocketServer {
             addr,
             server_handle,
@@ -75,24 +75,24 @@ impl TestWebSocketServer {
             connected_clients,
         })
     }
-    
+
     /// Get the server URL
     pub fn url(&self) -> String {
         format!("ws://{}", self.addr)
     }
-    
+
     /// Get the number of connected clients
     pub async fn connected_clients_count(&self) -> usize {
         self.connected_clients.read().await.len()
     }
-    
+
     /// Shutdown the server
     pub async fn shutdown(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let _ = self.shutdown_tx.send(());
         self.server_handle.await?;
         Ok(())
     }
-    
+
     /// Run the WebSocket server
     async fn run_server(
         listener: TcpListener,
@@ -100,7 +100,7 @@ impl TestWebSocketServer {
         connected_clients: Arc<RwLock<HashMap<String, ClientInfo>>>,
     ) {
         let mut client_counter = 0u64;
-        
+
         loop {
             tokio::select! {
                 // Accept new connections
@@ -109,7 +109,7 @@ impl TestWebSocketServer {
                         Ok((stream, addr)) => {
                             client_counter += 1;
                             let client_id = format!("client_{}", client_counter);
-                            
+
                             // Add client to tracking
                             {
                                 let mut clients = connected_clients.write().await;
@@ -119,7 +119,7 @@ impl TestWebSocketServer {
                                     message_count: 0,
                                 });
                             }
-                            
+
                             // Handle the connection
                             let clients = Arc::clone(&connected_clients);
                             tokio::spawn(async move {
@@ -133,7 +133,7 @@ impl TestWebSocketServer {
                         }
                     }
                 }
-                
+
                 // Shutdown signal
                 _ = shutdown_rx.recv() => {
                     break;
@@ -141,7 +141,7 @@ impl TestWebSocketServer {
             }
         }
     }
-    
+
     /// Handle a WebSocket connection
     async fn handle_connection(
         stream: TcpStream,
@@ -150,14 +150,14 @@ impl TestWebSocketServer {
     ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
         let ws_stream = accept_async(stream).await?;
         let (mut ws_sender, mut ws_receiver) = ws_stream.split();
-        
+
         // Send welcome message
         let welcome = ServerMessage::Welcome {
             client_id: client_id.clone(),
         };
         let welcome_json = serde_json::to_string(&welcome)?;
         ws_sender.send(tokio_tungstenite::tungstenite::Message::Text(welcome_json)).await?;
-        
+
         // Handle incoming messages
         while let Some(msg) = ws_receiver.next().await {
             match msg? {
@@ -167,7 +167,7 @@ impl TestWebSocketServer {
                         let response = Self::handle_client_message(&client_msg, &client_id).await;
                         let response_json = serde_json::to_string(&response)?;
                         ws_sender.send(tokio_tungstenite::tungstenite::Message::Text(response_json)).await?;
-                        
+
                         // Update client stats
                         {
                             let mut clients = connected_clients.write().await;
@@ -197,16 +197,16 @@ impl TestWebSocketServer {
                 _ => {}
             }
         }
-        
+
         // Remove client from tracking
         {
             let mut clients = connected_clients.write().await;
             clients.remove(&client_id);
         }
-        
+
         Ok(())
     }
-    
+
     /// Handle client messages and generate responses
     async fn handle_client_message(
         client_msg: &ClientMessage,
@@ -247,24 +247,24 @@ impl TestWebSocketServer {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_server_creation() {
         let server = TestWebSocketServer::new().await.unwrap();
         assert!(!server.url().is_empty());
         assert!(server.url().starts_with("ws://"));
-        
+
         server.shutdown().await.unwrap();
     }
-    
+
     #[tokio::test]
     async fn test_server_url_format() {
         let server = TestWebSocketServer::new().await.unwrap();
         let url = server.url();
-        
+
         assert!(url.starts_with("ws://127.0.0.1:"));
         assert!(url.contains("127.0.0.1"));
-        
+
         server.shutdown().await.unwrap();
     }
 }

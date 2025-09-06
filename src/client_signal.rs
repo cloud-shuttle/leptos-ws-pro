@@ -38,9 +38,12 @@ where
     fn update_json(&self, patch: ServerSignalUpdate) -> Result<(), Error> {
         // Simplified: just set the new value directly
         let new_value = patch.patch;
-        *self.json_value.write().map_err(|_| Error::UpdateSignalFailed)? = new_value.clone();
-        *self.value.write() = serde_json::from_value(new_value)
-            .map_err(|err| Error::SerializationFailed(err))?;
+        *self
+            .json_value
+            .write()
+            .map_err(|_| Error::UpdateSignalFailed)? = new_value.clone();
+        *self.value.write() =
+            serde_json::from_value(new_value).map_err(|err| Error::SerializationFailed(err))?;
         Ok(())
     }
     fn set_json(&self, new_value: Value) -> Result<(), Error> {

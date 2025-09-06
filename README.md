@@ -29,33 +29,33 @@ A production-ready WebSocket library for Leptos with transport layer, RPC system
 
 ## 🗺️ Roadmap Overview
 
-| Phase | Version | Target | Focus |
-|-------|---------|--------|-------|
-| **Current** | v0.2.0-beta | ✅ Released | Core functionality with TDD |
-| **Next** | v0.3.0-alpha | Q1 2025 | Real network implementation |
-| **Future** | v0.4.0-beta | Q1 2025 | Production features & performance |
-| **Goal** | v1.0.0 | Q3 2025 | Stable production release |
+| Phase       | Version      | Target      | Focus                             |
+| ----------- | ------------ | ----------- | --------------------------------- |
+| **Current** | v0.2.0-beta  | ✅ Released | Core functionality with TDD       |
+| **Next**    | v0.3.0-alpha | Q1 2025     | Real network implementation       |
+| **Future**  | v0.4.0-beta  | Q1 2025     | Production features & performance |
+| **Goal**    | v1.0.0       | Q3 2025     | Stable production release         |
 
 ## 📊 Test Coverage
 
 - **✅ Unit Tests**: 28 tests (all passing)
 - **✅ Integration Tests**: 33 tests (all passing)
 - **✅ Doctests**: 2 tests (all passing)
-- **🚧 Server Tests**: Planned  
+- **🚧 Server Tests**: Planned
 - **🚧 Browser Tests**: Planned
 - **🚧 User Journey Tests**: Planned
 - **🚧 Load Tests**: Planned
 
 ## 🎭 Browser Support
 
-| Browser | Desktop | Mobile | Status |
-|---------|---------|--------|--------|
-| **Chrome** | 🚧 | 🚧 | Planned |
-| **Firefox** | 🚧 | 🚧 | Planned |
-| **Safari** | 🚧 | 🚧 | Planned |
-| **Edge** | 🚧 | 🚧 | Planned |
-| **Mobile Chrome** | N/A | 🚧 | Planned |
-| **Mobile Safari** | N/A | 🚧 | Planned |
+| Browser           | Desktop | Mobile | Status  |
+| ----------------- | ------- | ------ | ------- |
+| **Chrome**        | 🚧      | 🚧     | Planned |
+| **Firefox**       | 🚧      | 🚧     | Planned |
+| **Safari**        | 🚧      | 🚧     | Planned |
+| **Edge**          | 🚧      | 🚧     | Planned |
+| **Mobile Chrome** | N/A     | 🚧     | Planned |
+| **Mobile Safari** | N/A     | 🚧     | Planned |
 
 ## 🚀 Quick Start
 
@@ -76,13 +76,13 @@ use leptos::prelude::*;
 fn MyApp() -> impl IntoView {
     // Create WebSocket context
     let ws_context = use_websocket("ws://localhost:8080");
-    
+
     // Test JSON codec
     let codec = JsonCodec::new();
     let message = "Hello, WebSocket!".to_string();
     let encoded = codec.encode(&message).unwrap();
     let decoded: String = codec.decode(&encoded).unwrap();
-    
+
     view! {
         <div>
             <p>"Connection state: " {move || format!("{:?}", ws_context.connection_state())}</p>
@@ -132,7 +132,7 @@ node tests/e2e/test-runner.js
 The library is organized into focused modules:
 
 - **transport/**: WebSocket transport layer
-- **codec/**: Message encoding/decoding  
+- **codec/**: Message encoding/decoding
 - **reactive/**: Leptos reactive integration
 - **rpc/**: Type-safe RPC system
 - **tests/**: Comprehensive test suite
@@ -185,6 +185,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## 🚀 Beta Release Status
 
 This library is in **beta** with:
+
 - ✅ Production-ready core functionality
 - ✅ Comprehensive test suite (61 tests)
 - ✅ Transport layer implementations

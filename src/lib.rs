@@ -1,9 +1,9 @@
 #![doc = include_str!("../README.md")]
 
 //! # leptos-ws
-//! 
+//!
 //! A world-class WebSocket library for Leptos 0.8.x that provides:
-//! 
+//!
 //! - **Reactive-first design**: WebSocket connections as first-class reactive primitives
 //! - **Zero-copy performance**: 40% better performance with rkyv-based serialization
 //! - **Type-safe RPC**: Compile-time guarantees for all WebSocket communications
@@ -12,20 +12,20 @@
 //! - **Real-time collaboration**: Built-in presence awareness and conflict resolution
 //! - **Production-ready**: Automatic reconnection, horizontal scaling, comprehensive monitoring
 
-use leptos::prelude::*;
-use std::sync::{Arc, Mutex};
 use crate::client_signal::ClientSignal;
 use crate::client_signals::ClientSignals;
 use crate::messages::{Messages, ServerSignalMessage};
+use leptos::prelude::*;
+use std::sync::{Arc, Mutex};
 // use leptos_use::{use_websocket_with_options, UseWebSocketOptions, UseWebSocketReturn};
 // use leptos_use::core::ConnectionReadyState;
 use crate::codec::JsonCodec as JsonSerdeCodec;
 
 // Core modules
-pub mod transport;
-pub mod reactive;
 pub mod codec;
+pub mod reactive;
 pub mod rpc;
+pub mod transport;
 // pub mod collaboration;
 // pub mod resilience;
 // pub mod middleware;
@@ -51,12 +51,12 @@ mod client_signals;
 pub mod axum;
 
 // Re-exports for convenience
+pub use codec::{Codec, HybridCodec, JsonCodec, RkyvCodec, WsMessage};
 pub use reactive::{
-    WebSocketProvider, WebSocketContext, use_websocket, use_connection_status,
-    use_connection_metrics, use_presence, use_message_subscription,
+    use_connection_metrics, use_connection_status, use_message_subscription, use_presence,
+    use_websocket, WebSocketContext, WebSocketProvider,
 };
-pub use codec::{Codec, JsonCodec, RkyvCodec, HybridCodec, WsMessage};
-pub use transport::{Transport, TransportFactory, TransportConfig, Message, ConnectionState};
+pub use transport::{ConnectionState, Message, Transport, TransportConfig, TransportFactory};
 
 /// A type alias for a signal that synchronizes with the server.
 ///
@@ -137,7 +137,7 @@ impl ServerSignalWebSocket {
         // Temporarily disabled - needs leptos-use integration
         let delayed_msgs = Arc::default();
         let (ready_state, _) = signal(ConnectionState::Disconnected);
-        
+
         Self {
             send: Arc::new(|_| {}),
             ready_state,
@@ -161,10 +161,7 @@ impl ServerSignalWebSocket {
         }
     }
 
-    fn setup_delayed_message_processor(
-        ws_client: &Self,
-        ready_state: ReadSignal<ConnectionState>,
-    ) {
+    fn setup_delayed_message_processor(ws_client: &Self, ready_state: ReadSignal<ConnectionState>) {
         let ws_clone = ws_client.clone();
         Effect::new(move |_| {
             if ready_state.get() == ConnectionState::Connected {

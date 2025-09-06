@@ -26,7 +26,10 @@ mod tests {
 
         // Test AddingSignalFailed
         let error = Error::AddingSignalFailed;
-        assert_eq!(error.to_string(), "Could not add ServerSignal to ServerSignals");
+        assert_eq!(
+            error.to_string(),
+            "Could not add ServerSignal to ServerSignals"
+        );
 
         // Test UpdateSignalFailed
         let error = Error::UpdateSignalFailed;
@@ -36,7 +39,8 @@ mod tests {
     #[test]
     fn test_serialization_error_conversion() {
         // Arrange
-        let json_error = serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, "Test error"));
+        let json_error =
+            serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, "Test error"));
 
         // Act
         let error = Error::from(json_error);
@@ -71,9 +75,10 @@ mod tests {
     #[test]
     fn test_error_chain() {
         // Test that we can chain errors properly
-        let json_error = serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, "Chain test"));
+        let json_error =
+            serde_json::Error::io(std::io::Error::new(std::io::ErrorKind::Other, "Chain test"));
         let error: Error = json_error.into();
-        
+
         // Verify the error chain works
         let error_string = error.to_string();
         assert!(error_string.contains("Chain test"));

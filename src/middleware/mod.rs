@@ -1,5 +1,5 @@
 //! Middleware system for leptos-ws
-//! 
+//!
 //! Provides Tower-compatible middleware for cross-cutting concerns like
 //! authentication, rate limiting, compression, and metrics.
 
@@ -16,7 +16,7 @@ pub trait WebSocketMiddleware: Send + Sync + 'static {
     type Request;
     type Response;
     type Error;
-    
+
     async fn call(&self, request: Self::Request) -> Result<Self::Response, Self::Error>;
 }
 
@@ -40,10 +40,10 @@ pub struct Claims {
 pub enum AuthError {
     #[error("Invalid token: {0}")]
     InvalidToken(String),
-    
+
     #[error("Expired token")]
     ExpiredToken,
-    
+
     #[error("Missing token")]
     MissingToken,
 }
@@ -59,11 +59,11 @@ impl WebSocketMiddleware for AuthenticationLayer {
     type Request = AuthenticatedRequest;
     type Response = AuthenticatedResponse;
     type Error = AuthError;
-    
+
     async fn call(&self, request: Self::Request) -> Result<Self::Response, Self::Error> {
         let token = request.token.ok_or(AuthError::MissingToken)?;
         let claims = self.validator.validate(&token)?;
-        
+
         Ok(AuthenticatedResponse {
             claims,
             original_request: request,
@@ -109,10 +109,10 @@ impl WebSocketMiddleware for RateLimitLayer {
     type Request = RateLimitedRequest;
     type Response = RateLimitedResponse;
     type Error = RateLimitError;
-    
+
     async fn call(&self, request: Self::Request) -> Result<Self::Response, Self::Error> {
         self.limiter.check_and_consume(&request.user_id, 1)?;
-        
+
         Ok(RateLimitedResponse {
             original_request: request,
         })
@@ -149,7 +149,7 @@ impl WebSocketMiddleware for CompressionLayer {
     type Request = CompressedRequest;
     type Response = CompressedResponse;
     type Error = CompressionError;
-    
+
     async fn call(&self, request: Self::Request) -> Result<Self::Response, Self::Error> {
         let compressed_data = if request.data.len() > self.threshold {
             zstd::encode_all(&request.data, 3)
@@ -157,7 +157,7 @@ impl WebSocketMiddleware for CompressionLayer {
         } else {
             request.data.clone()
         };
-        
+
         Ok(CompressedResponse {
             data: compressed_data,
             original_size: request.data.len(),
@@ -224,7 +224,7 @@ impl WebSocketMiddleware for MetricsLayer {
     type Request = MetricsRequest;
     type Response = MetricsResponse;
     type Error = MetricsError;
-    
+
     async fn call(&self, request: Self::Request) -> Result<Self::Response, Self::Error> {
         // Update metrics based on request type
         match request.request_type {
@@ -248,7 +248,7 @@ impl WebSocketMiddleware for MetricsLayer {
                 self.metrics.reconnection_attempts += 1;
             }
         }
-        
+
         Ok(MetricsResponse {
             metrics: self.metrics.clone(),
             original_request: request,
@@ -298,7 +298,7 @@ impl<T> MiddlewareStackBuilder<T> {
             middlewares: Vec::new(),
         }
     }
-    
+
     pub fn add<M>(mut self, middleware: M) -> Self
     where
         M: WebSocketMiddleware<Request = T, Response = T, Error = MiddlewareError> + Send + Sync + 'static,
@@ -306,7 +306,7 @@ impl<T> MiddlewareStackBuilder<T> {
         self.middlewares.push(Box::new(middleware));
         self
     }
-    
+
     pub fn build(self) -> MiddlewareStack<T> {
         MiddlewareStack {
             middlewares: self.middlewares,
@@ -332,14 +332,14 @@ impl<T> MiddlewareStack<T> {
 pub enum MiddlewareError {
     #[error("Authentication failed: {0}")]
     AuthenticationFailed(#[from] AuthError),
-    
+
     #[error("Rate limit exceeded: {0}")]
     RateLimitExceeded(#[from] RateLimitError),
-    
+
     #[cfg(feature = "compression")]
     #[error("Compression failed: {0}")]
     CompressionFailed(#[from] CompressionError),
-    
+
     #[cfg(feature = "metrics")]
     #[error("Metrics error: {0}")]
     MetricsError(#[from] MetricsError),
@@ -348,11 +348,11 @@ pub enum MiddlewareError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[tokio::test]
     async fn test_authentication_layer() {
         struct MockValidator;
-        
+
         impl JwtValidator for MockValidator {
             fn validate(&self, token: &str) -> Result<Claims, AuthError> {
                 if token == "valid_token" {
@@ -366,47 +366,47 @@ mod tests {
                 }
             }
         }
-        
+
         let layer = AuthenticationLayer::new(Box::new(MockValidator));
-        
+
         let request = AuthenticatedRequest {
             token: Some("valid_token".to_string()),
             message: b"test message".to_vec(),
         };
-        
+
         let response = layer.call(request).await;
         assert!(response.is_ok());
-        
+
         let claims = response.unwrap().claims;
         assert_eq!(claims.user_id, "user1");
     }
-    
+
     #[tokio::test]
     async fn test_rate_limit_layer() {
         struct MockLimiter;
-        
+
         impl RateLimiter for MockLimiter {
             fn check_and_consume(&self, _user_id: &str, _count: u32) -> Result<(), RateLimitError> {
                 Ok(())
             }
         }
-        
+
         let layer = RateLimitLayer::new(Box::new(MockLimiter));
-        
+
         let request = RateLimitedRequest {
             user_id: "user1".to_string(),
             message: b"test message".to_vec(),
         };
-        
+
         let response = layer.call(request).await;
         assert!(response.is_ok());
     }
-    
+
     #[test]
     fn test_middleware_stack_builder() {
         let stack = MiddlewareStackBuilder::<()>::new()
             .build();
-        
+
         assert_eq!(stack.middlewares.len(), 0);
     }
 }

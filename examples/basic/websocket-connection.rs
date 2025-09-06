@@ -1,5 +1,5 @@
 //! Basic WebSocket Connection Example
-//! 
+//!
 //! This example demonstrates how to create a basic WebSocket connection
 //! using the Leptos WS Pro library.
 
@@ -11,31 +11,31 @@ use leptos_ws_pro::*;
 pub fn App() -> impl IntoView {
     // Create WebSocket provider with server URL
     let provider = WebSocketProvider::new("ws://localhost:8080");
-    
+
     // Create reactive WebSocket context
     let context = WebSocketContext::new(provider);
-    
+
     // Get connection state signal
     let connection_state = context.connection_state;
     let is_connected = move || context.is_connected();
-    
+
     // Handle connection button click
     let connect = move |_| {
         // In a real implementation, this would trigger connection
         // For this example, we'll just update the state
         context.set_connection_state(ConnectionState::Connecting);
-        
+
         // Simulate connection after a delay
         set_timeout(move || {
             context.set_connection_state(ConnectionState::Connected);
         }, 1000);
     };
-    
+
     // Handle disconnect button click
     let disconnect = move |_| {
         context.set_connection_state(ConnectionState::Disconnected);
     };
-    
+
     // Handle send message button click
     let send_message = move |_| {
         if is_connected() {
@@ -43,11 +43,11 @@ pub fn App() -> impl IntoView {
             context.send_message(message);
         }
     };
-    
+
     view! {
         <div class="app">
             <h1>"Leptos WS Pro - Basic Connection Example"</h1>
-            
+
             <div class="connection-status">
                 <h2>"Connection Status"</h2>
                 <div class="status" class:connected=is_connected>
@@ -58,25 +58,25 @@ pub fn App() -> impl IntoView {
                     }}
                 </div>
             </div>
-            
+
             <div class="controls">
                 <h2>"Controls"</h2>
                 <div class="button-group">
-                    <button 
+                    <button
                         on:click=connect
                         disabled=is_connected
                     >
                         "Connect"
                     </button>
-                    
-                    <button 
+
+                    <button
                         on:click=disconnect
                         disabled=move || !is_connected()
                     >
                         "Disconnect"
                     </button>
-                    
-                    <button 
+
+                    <button
                         on:click=send_message
                         disabled=move || !is_connected()
                     >
@@ -84,7 +84,7 @@ pub fn App() -> impl IntoView {
                     </button>
                 </div>
             </div>
-            
+
             <div class="info">
                 <h2>"Information"</h2>
                 <p>"This example demonstrates:"</p>
@@ -194,26 +194,26 @@ pub fn main() {
 mod tests {
     use super::*;
     use leptos::prelude::*;
-    
+
     #[test]
     fn test_app_creation() {
         let app = App();
         // Test that the app component can be created
         assert!(true); // Basic test to ensure compilation
     }
-    
+
     #[test]
     fn test_websocket_provider_creation() {
         let provider = WebSocketProvider::new("ws://localhost:8080");
         // Test that provider can be created
         assert!(true); // Basic test to ensure compilation
     }
-    
+
     #[test]
     fn test_websocket_context_creation() {
         let provider = WebSocketProvider::new("ws://localhost:8080");
         let context = WebSocketContext::new(provider);
-        
+
         // Test initial connection state
         assert_eq!(context.connection_state.get(), ConnectionState::Disconnected);
         assert!(!context.is_connected());

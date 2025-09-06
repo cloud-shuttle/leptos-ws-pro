@@ -1,5 +1,5 @@
 //! Codec module for encoding and decoding WebSocket messages
-//! 
+//!
 //! This module provides a simple JSON-based codec system for WebSocket messages.
 //! Future versions will include zero-copy serialization with rkyv and compression.
 
@@ -7,16 +7,16 @@ use serde::{Deserialize as SerdeDeserialize, Serialize as SerdeSerialize};
 use thiserror::Error;
 
 /// Trait for encoding and decoding messages
-pub trait Codec<T>: Send + Sync 
+pub trait Codec<T>: Send + Sync
 where
     T: Send + Sync,
 {
     /// Encode a message to bytes
     fn encode(&self, message: &T) -> Result<Vec<u8>, CodecError>;
-    
+
     /// Decode bytes to a message
     fn decode(&self, data: &[u8]) -> Result<T, CodecError>;
-    
+
     /// Get the content type for this codec
     fn content_type(&self) -> &'static str;
 }
@@ -26,13 +26,13 @@ where
 pub enum CodecError {
     #[error("Serialization failed: {0}")]
     SerializationFailed(String),
-    
+
     #[error("Deserialization failed: {0}")]
     DeserializationFailed(String),
-    
+
     #[error("Compression failed: {0}")]
     CompressionFailed(String),
-    
+
     #[error("Decompression failed: {0}")]
     DecompressionFailed(String),
 }
@@ -51,15 +51,13 @@ where
     T: SerdeSerialize + for<'de> SerdeDeserialize<'de> + Clone + Send + Sync,
 {
     fn encode(&self, message: &T) -> Result<Vec<u8>, CodecError> {
-        serde_json::to_vec(message)
-            .map_err(|e| CodecError::SerializationFailed(e.to_string()))
+        serde_json::to_vec(message).map_err(|e| CodecError::SerializationFailed(e.to_string()))
     }
-    
+
     fn decode(&self, data: &[u8]) -> Result<T, CodecError> {
-        serde_json::from_slice(data)
-            .map_err(|e| CodecError::DeserializationFailed(e.to_string()))
+        serde_json::from_slice(data).map_err(|e| CodecError::DeserializationFailed(e.to_string()))
     }
-    
+
     fn content_type(&self) -> &'static str {
         "application/json"
     }
@@ -80,16 +78,14 @@ where
 {
     fn encode(&self, message: &T) -> Result<Vec<u8>, CodecError> {
         // For now, just use JSON serialization
-        serde_json::to_vec(message)
-            .map_err(|e| CodecError::SerializationFailed(e.to_string()))
+        serde_json::to_vec(message).map_err(|e| CodecError::SerializationFailed(e.to_string()))
     }
-    
+
     fn decode(&self, data: &[u8]) -> Result<T, CodecError> {
         // For now, just use JSON deserialization
-        serde_json::from_slice(data)
-            .map_err(|e| CodecError::DeserializationFailed(e.to_string()))
+        serde_json::from_slice(data).map_err(|e| CodecError::DeserializationFailed(e.to_string()))
     }
-    
+
     fn content_type(&self) -> &'static str {
         "application/rkyv"
     }
@@ -124,7 +120,7 @@ where
             }
         }
     }
-    
+
     fn decode(&self, data: &[u8]) -> Result<T, CodecError> {
         // Try JSON first (simpler for now)
         match self.json_codec.decode(data) {
@@ -141,7 +137,7 @@ where
             }
         }
     }
-    
+
     fn content_type(&self) -> &'static str {
         "application/hybrid"
     }
@@ -231,7 +227,7 @@ mod tests {
         };
 
         let ws_message = WsMessage::new(test_data.clone());
-        
+
         // Test JSON serialization
         let json_encoded = serde_json::to_string(&ws_message).unwrap();
         let json_decoded: WsMessage<TestMessage> = serde_json::from_str(&json_encoded).unwrap();

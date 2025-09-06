@@ -1,5 +1,5 @@
 //! Real-time collaboration primitives for leptos-ws
-//! 
+//!
 //! Provides built-in support for collaborative applications using CRDT-inspired
 //! approaches with conflict resolution and presence awareness.
 
@@ -24,13 +24,13 @@ pub struct CollaborativeDocument<T: Document> {
 /// Trait for documents that can be collaboratively edited
 pub trait Document: Clone + Send + Sync + 'static {
     type Operation: Clone + Send + Sync;
-    
+
     /// Apply an operation to the document
     fn apply(&mut self, operation: &Self::Operation) -> Result<(), ConflictError>;
-    
+
     /// Get the document's version
     fn version(&self) -> u64;
-    
+
     /// Set the document's version
     fn set_version(&mut self, version: u64);
 }
@@ -63,10 +63,10 @@ pub trait ConflictResolver<T: Document>: Send + Sync {
 pub enum ConflictError {
     #[error("Operation conflict: {0}")]
     OperationConflict(String),
-    
+
     #[error("Version mismatch: expected {expected}, got {actual}")]
     VersionMismatch { expected: u64, actual: u64 },
-    
+
     #[error("Invalid operation: {0}")]
     InvalidOperation(String),
 }
@@ -109,7 +109,7 @@ impl FractionalIndex {
             client_id,
         }
     }
-    
+
     pub fn between(&self, other: &Self) -> Self {
         // Simplified implementation
         Self {
@@ -141,7 +141,7 @@ pub enum TextOperationType {
 
 impl Document for CollaborativeText {
     type Operation = TextOperation;
-    
+
     fn apply(&mut self, operation: &Self::Operation) -> Result<(), ConflictError> {
         match operation.operation_type {
             TextOperationType::Insert(ref content) => {
@@ -161,16 +161,16 @@ impl Document for CollaborativeText {
                 self.content.drain(operation.position..operation.position + length);
             }
         }
-        
+
         self.operations.push(operation.clone());
         self.version += 1;
         Ok(())
     }
-    
+
     fn version(&self) -> u64 {
         self.version
     }
-    
+
     fn set_version(&mut self, version: u64) {
         self.version = version;
     }
@@ -195,7 +195,7 @@ pub fn use_collaborative_document<T: Document>(
     let (committed, set_committed) = create_signal(initial);
     let operations = VecDeque::new();
     let resolver = Box::new(LastWriteWinsResolver);
-    
+
     CollaborativeDocument {
         local,
         committed,
@@ -213,21 +213,21 @@ pub fn use_presence_awareness(user_id: String) -> Signal<PresenceAwareness> {
         metadata: HashMap::new(),
         last_seen: Instant::now(),
     });
-    
+
     // Update last_seen periodically
     create_effect(move |_| {
         set_presence.update(|p| {
             p.last_seen = Instant::now();
         });
     });
-    
+
     presence.into()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_collaborative_text_creation() {
         let text = CollaborativeText {
@@ -235,11 +235,11 @@ mod tests {
             version: 0,
             operations: Vec::new(),
         };
-        
+
         assert_eq!(text.content, "Hello, World!");
         assert_eq!(text.version, 0);
     }
-    
+
     #[test]
     fn test_text_operation_insert() {
         let mut text = CollaborativeText {
@@ -247,17 +247,17 @@ mod tests {
             version: 0,
             operations: Vec::new(),
         };
-        
+
         let operation = TextOperation {
             position: 5,
             operation_type: TextOperationType::Insert(", Beautiful".to_string()),
         };
-        
+
         assert!(text.apply(&operation).is_ok());
         assert_eq!(text.content, "Hello, Beautiful World!");
         assert_eq!(text.version, 1);
     }
-    
+
     #[test]
     fn test_text_operation_delete() {
         let mut text = CollaborativeText {
@@ -265,23 +265,23 @@ mod tests {
             version: 0,
             operations: Vec::new(),
         };
-        
+
         let operation = TextOperation {
             position: 5,
             operation_type: TextOperationType::Delete(2),
         };
-        
+
         assert!(text.apply(&operation).is_ok());
         assert_eq!(text.content, "Hello World!");
         assert_eq!(text.version, 1);
     }
-    
+
     #[test]
     fn test_fractional_index_creation() {
         let index = FractionalIndex::new("client1".to_string());
         assert_eq!(index.client_id, "client1");
     }
-    
+
     #[test]
     fn test_presence_awareness_creation() {
         let presence = PresenceAwareness {
@@ -291,7 +291,7 @@ mod tests {
             metadata: HashMap::new(),
             last_seen: Instant::now(),
         };
-        
+
         assert_eq!(presence.user_id, "user1");
         assert!(presence.cursor.is_some());
     }

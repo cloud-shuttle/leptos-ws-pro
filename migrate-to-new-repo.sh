@@ -198,7 +198,7 @@ A world-class WebSocket library for Leptos with comprehensive testing infrastruc
 ## 📊 Test Coverage
 
 - **Unit Tests**: 28 tests
-- **Integration Tests**: 89 tests  
+- **Integration Tests**: 89 tests
 - **Server Tests**: 12 tests (real WebSocket server)
 - **Browser Tests**: 40+ tests (Playwright cross-browser)
 - **User Journey Tests**: 25+ tests (complete workflows)

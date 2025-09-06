@@ -1,5 +1,5 @@
 //! Metrics and observability for leptos-ws
-//! 
+//!
 //! Provides comprehensive metrics collection, tracing, and monitoring
 //! capabilities for production deployments.
 
@@ -85,85 +85,85 @@ impl MetricsCollector {
             start_time: Instant::now(),
         }
     }
-    
+
     pub fn record_message_sent(&self, bytes: usize) {
         let mut metrics = Arc::get_mut(&mut self.metrics.clone()).unwrap();
         metrics.messages_sent += 1;
         metrics.bytes_sent += bytes as u64;
-        
+
         #[cfg(feature = "metrics")]
         {
             self.counters.messages_sent.increment(1);
             self.counters.bytes_sent.increment(bytes as u64);
         }
     }
-    
+
     pub fn record_message_received(&self, bytes: usize) {
         let mut metrics = Arc::get_mut(&mut self.metrics.clone()).unwrap();
         metrics.messages_received += 1;
         metrics.bytes_received += bytes as u64;
-        
+
         #[cfg(feature = "metrics")]
         {
             self.counters.messages_received.increment(1);
             self.counters.bytes_received.increment(bytes as u64);
         }
     }
-    
+
     pub fn record_connection_established(&self) {
         let mut metrics = Arc::get_mut(&mut self.metrics.clone()).unwrap();
         metrics.active_connections += 1;
-        
+
         #[cfg(feature = "metrics")]
         {
             self.counters.active_connections.set(metrics.active_connections as f64);
         }
     }
-    
+
     pub fn record_connection_closed(&self) {
         let mut metrics = Arc::get_mut(&mut self.metrics.clone()).unwrap();
         if metrics.active_connections > 0 {
             metrics.active_connections -= 1;
         }
-        
+
         #[cfg(feature = "metrics")]
         {
             self.counters.active_connections.set(metrics.active_connections as f64);
         }
     }
-    
+
     pub fn record_reconnection_attempt(&self) {
         let mut metrics = Arc::get_mut(&mut self.metrics.clone()).unwrap();
         metrics.reconnection_attempts += 1;
-        
+
         #[cfg(feature = "metrics")]
         {
             self.counters.reconnection_attempts.increment(1);
         }
     }
-    
+
     pub fn record_latency(&self, latency: Duration) {
         let mut metrics = Arc::get_mut(&mut self.metrics.clone()).unwrap();
         let latency_ms = latency.as_millis() as f64;
-        
+
         // Update average latency
         if let Some(avg) = metrics.avg_latency_ms {
             metrics.avg_latency_ms = Some((avg + latency_ms) / 2.0);
         } else {
             metrics.avg_latency_ms = Some(latency_ms);
         }
-        
+
         #[cfg(feature = "metrics")]
         {
             self.counters.message_latency.record(latency_ms);
         }
     }
-    
+
     pub fn record_heartbeat(&self) {
         let mut metrics = Arc::get_mut(&mut self.metrics.clone()).unwrap();
         metrics.last_heartbeat = Some(Instant::now());
     }
-    
+
     pub fn get_metrics(&self) -> ConnectionMetrics {
         let mut metrics = (*self.metrics).clone();
         metrics.uptime = self.start_time.elapsed();
@@ -184,35 +184,35 @@ impl PerformanceProfiler {
             max_samples,
         }
     }
-    
+
     pub fn start_measurement(&self, name: &str) -> Measurement {
         Measurement {
             name: name.to_string(),
             start: Instant::now(),
         }
     }
-    
+
     pub fn record_measurement(&mut self, measurement: Measurement) {
         let duration = measurement.start.elapsed();
         let samples = self.measurements.entry(measurement.name).or_insert_with(Vec::new);
-        
+
         samples.push(duration);
-        
+
         // Keep only the most recent samples
         if samples.len() > self.max_samples {
             samples.remove(0);
         }
     }
-    
+
     pub fn get_statistics(&self, name: &str) -> Option<PerformanceStats> {
         let samples = self.measurements.get(name)?;
         if samples.is_empty() {
             return None;
         }
-        
+
         let mut sorted = samples.clone();
         sorted.sort();
-        
+
         let count = sorted.len();
         let min = sorted[0];
         let max = sorted[count - 1];
@@ -221,10 +221,10 @@ impl PerformanceProfiler {
         } else {
             sorted[count / 2]
         };
-        
+
         let sum: Duration = sorted.iter().sum();
         let avg = sum / count as u32;
-        
+
         Some(PerformanceStats {
             count,
             min,
@@ -276,25 +276,25 @@ impl HealthChecker {
             checks: Vec::new(),
         }
     }
-    
+
     pub fn add_check<C>(&mut self, check: C)
     where
         C: HealthCheck + Send + Sync + 'static,
     {
         self.checks.push(Box::new(check));
     }
-    
+
     pub fn run_checks(&self) -> HashMap<String, HealthStatus> {
         let mut results = HashMap::new();
-        
+
         for check in &self.checks {
             let status = check.check();
             results.insert(check.name().to_string(), status);
         }
-        
+
         results
     }
-    
+
     pub fn is_healthy(&self) -> bool {
         for check in &self.checks {
             match check.check() {
@@ -319,7 +319,7 @@ impl ConnectionHealthCheck {
             timeout,
         }
     }
-    
+
     pub fn record_heartbeat(&mut self) {
         self.last_heartbeat = Some(Instant::now());
     }
@@ -329,7 +329,7 @@ impl HealthCheck for ConnectionHealthCheck {
     fn name(&self) -> &str {
         "connection"
     }
-    
+
     fn check(&self) -> HealthStatus {
         match self.last_heartbeat {
             Some(last) => {
@@ -347,7 +347,7 @@ impl HealthCheck for ConnectionHealthCheck {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_connection_metrics_default() {
         let metrics = ConnectionMetrics::default();
@@ -355,51 +355,51 @@ mod tests {
         assert_eq!(metrics.messages_received, 0);
         assert_eq!(metrics.active_connections, 0);
     }
-    
+
     #[test]
     fn test_metrics_collector_creation() {
         let collector = MetricsCollector::new();
         let metrics = collector.get_metrics();
         assert_eq!(metrics.messages_sent, 0);
     }
-    
+
     #[test]
     fn test_performance_profiler() {
         let mut profiler = PerformanceProfiler::new(100);
         let measurement = profiler.start_measurement("test");
-        
+
         // Simulate some work
         std::thread::sleep(Duration::from_millis(10));
-        
+
         profiler.record_measurement(measurement);
-        
+
         let stats = profiler.get_statistics("test");
         assert!(stats.is_some());
-        
+
         let stats = stats.unwrap();
         assert_eq!(stats.count, 1);
         assert!(stats.avg >= Duration::from_millis(10));
     }
-    
+
     #[test]
     fn test_health_checker() {
         let mut checker = HealthChecker::new();
         let mut connection_check = ConnectionHealthCheck::new(Duration::from_secs(5));
-        
+
         checker.add_check(connection_check);
-        
+
         let results = checker.run_checks();
         assert_eq!(results.len(), 1);
         assert_eq!(results.get("connection"), Some(&HealthStatus::Unknown));
     }
-    
+
     #[test]
     fn test_connection_health_check() {
         let mut check = ConnectionHealthCheck::new(Duration::from_secs(1));
-        
+
         // Initially unknown
         assert_eq!(check.check(), HealthStatus::Unknown);
-        
+
         // Record heartbeat
         check.record_heartbeat();
         assert_eq!(check.check(), HealthStatus::Healthy);

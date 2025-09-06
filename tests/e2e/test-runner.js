@@ -2,7 +2,7 @@
 
 /**
  * Comprehensive test runner for leptos_ws E2E testing
- * 
+ *
  * This script orchestrates the entire testing pipeline:
  * 1. Starts the Rust WebSocket test server
  * 2. Runs Playwright browser tests
@@ -10,10 +10,10 @@
  * 4. Cleans up resources
  */
 
-import { spawn } from 'child_process';
-import { promisify } from 'util';
-import fs from 'fs/promises';
-import path from 'path';
+import { spawn } from "child_process";
+import { promisify } from "util";
+import fs from "fs/promises";
+import path from "path";
 
 class TestRunner {
   constructor() {
@@ -26,39 +26,37 @@ class TestRunner {
         total: 0,
         passed: 0,
         failed: 0,
-        skipped: 0
+        skipped: 0,
       },
       coverage: {
         unit: 0,
         integration: 0,
         e2e: 0,
-        total: 0
-      }
+        total: 0,
+      },
     };
   }
 
   async startRustServer() {
-    console.log('🚀 Starting Rust WebSocket test server...');
-    
+    console.log("🚀 Starting Rust WebSocket test server...");
+
     return new Promise((resolve, reject) => {
-      this.rustServer = spawn('cargo', [
-        'test', 
-        '--test', 
-        'server_integration_tests',
-        '--',
-        '--nocapture'
-      ], {
-        stdio: 'pipe',
-        env: { ...process.env, RUST_LOG: 'debug' }
-      });
+      this.rustServer = spawn(
+        "cargo",
+        ["test", "--test", "server_integration_tests", "--", "--nocapture"],
+        {
+          stdio: "pipe",
+          env: { ...process.env, RUST_LOG: "debug" },
+        },
+      );
 
       let serverReady = false;
       let port = 8080;
 
-      this.rustServer.stdout?.on('data', (data) => {
+      this.rustServer.stdout?.on("data", (data) => {
         const output = data.toString();
-        console.log('📡 Server:', output.trim());
-        
+        console.log("📡 Server:", output.trim());
+
         // Look for server URL in output
         const urlMatch = output.match(/ws:\/\/127\.0\.0\.1:(\d+)/);
         if (urlMatch && !serverReady) {
@@ -69,51 +67,51 @@ class TestRunner {
         }
       });
 
-      this.rustServer.stderr?.on('data', (data) => {
-        console.error('❌ Server error:', data.toString());
+      this.rustServer.stderr?.on("data", (data) => {
+        console.error("❌ Server error:", data.toString());
       });
 
-      this.rustServer.on('error', (error) => {
-        console.error('❌ Failed to start server:', error);
+      this.rustServer.on("error", (error) => {
+        console.error("❌ Failed to start server:", error);
         reject(error);
       });
 
       // Timeout after 30 seconds
       setTimeout(() => {
         if (!serverReady) {
-          reject(new Error('Server startup timeout'));
+          reject(new Error("Server startup timeout"));
         }
       }, 30000);
     });
   }
 
   async runPlaywrightTests() {
-    console.log('🎭 Running Playwright browser tests...');
-    
+    console.log("🎭 Running Playwright browser tests...");
+
     return new Promise((resolve, reject) => {
-      const playwright = spawn('npx', ['playwright', 'test'], {
-        stdio: 'pipe',
-        cwd: process.cwd()
+      const playwright = spawn("npx", ["playwright", "test"], {
+        stdio: "pipe",
+        cwd: process.cwd(),
       });
 
-      let output = '';
-      let errorOutput = '';
+      let output = "";
+      let errorOutput = "";
 
-      playwright.stdout?.on('data', (data) => {
+      playwright.stdout?.on("data", (data) => {
         const text = data.toString();
         output += text;
-        console.log('🎭 Playwright:', text.trim());
+        console.log("🎭 Playwright:", text.trim());
       });
 
-      playwright.stderr?.on('data', (data) => {
+      playwright.stderr?.on("data", (data) => {
         const text = data.toString();
         errorOutput += text;
-        console.error('❌ Playwright error:', text.trim());
+        console.error("❌ Playwright error:", text.trim());
       });
 
-      playwright.on('close', (code) => {
+      playwright.on("close", (code) => {
         if (code === 0) {
-          console.log('✅ Playwright tests completed successfully');
+          console.log("✅ Playwright tests completed successfully");
           resolve({ output, errorOutput, code });
         } else {
           console.error(`❌ Playwright tests failed with code ${code}`);
@@ -121,40 +119,44 @@ class TestRunner {
         }
       });
 
-      playwright.on('error', (error) => {
-        console.error('❌ Failed to run Playwright tests:', error);
+      playwright.on("error", (error) => {
+        console.error("❌ Failed to run Playwright tests:", error);
         reject(error);
       });
     });
   }
 
   async runRustTests() {
-    console.log('🦀 Running Rust unit and integration tests...');
-    
+    console.log("🦀 Running Rust unit and integration tests...");
+
     return new Promise((resolve, reject) => {
-      const rustTests = spawn('cargo', ['test', '--all', '--features', 'server'], {
-        stdio: 'pipe',
-        cwd: process.cwd()
-      });
+      const rustTests = spawn(
+        "cargo",
+        ["test", "--all", "--features", "server"],
+        {
+          stdio: "pipe",
+          cwd: process.cwd(),
+        },
+      );
 
-      let output = '';
-      let errorOutput = '';
+      let output = "";
+      let errorOutput = "";
 
-      rustTests.stdout?.on('data', (data) => {
+      rustTests.stdout?.on("data", (data) => {
         const text = data.toString();
         output += text;
-        console.log('🦀 Rust:', text.trim());
+        console.log("🦀 Rust:", text.trim());
       });
 
-      rustTests.stderr?.on('data', (data) => {
+      rustTests.stderr?.on("data", (data) => {
         const text = data.toString();
         errorOutput += text;
-        console.error('❌ Rust error:', text.trim());
+        console.error("❌ Rust error:", text.trim());
       });
 
-      rustTests.on('close', (code) => {
+      rustTests.on("close", (code) => {
         if (code === 0) {
-          console.log('✅ Rust tests completed successfully');
+          console.log("✅ Rust tests completed successfully");
           resolve({ output, errorOutput, code });
         } else {
           console.error(`❌ Rust tests failed with code ${code}`);
@@ -162,51 +164,53 @@ class TestRunner {
         }
       });
 
-      rustTests.on('error', (error) => {
-        console.error('❌ Failed to run Rust tests:', error);
+      rustTests.on("error", (error) => {
+        console.error("❌ Failed to run Rust tests:", error);
         reject(error);
       });
     });
   }
 
   async generateReport() {
-    console.log('📊 Generating comprehensive test report...');
-    
+    console.log("📊 Generating comprehensive test report...");
+
     this.testResults.endTime = Date.now();
-    this.testResults.duration = this.testResults.endTime - this.testResults.startTime;
+    this.testResults.duration =
+      this.testResults.endTime - this.testResults.startTime;
 
     const report = {
       summary: {
         timestamp: new Date().toISOString(),
         duration: this.testResults.duration,
-        status: this.testResults.tests.failed === 0 ? 'PASSED' : 'FAILED'
+        status: this.testResults.tests.failed === 0 ? "PASSED" : "FAILED",
       },
       testResults: this.testResults,
       phases: {
         phase1: {
-          name: 'Real WebSocket Server Testing',
-          status: 'COMPLETED',
+          name: "Real WebSocket Server Testing",
+          status: "COMPLETED",
           tests: 12,
-          description: 'Server integration tests with real WebSocket communication'
+          description:
+            "Server integration tests with real WebSocket communication",
         },
         phase2: {
-          name: 'Playwright Browser Testing',
-          status: 'COMPLETED',
+          name: "Playwright Browser Testing",
+          status: "COMPLETED",
           tests: 40,
-          description: 'Cross-browser testing with real DOM interactions'
+          description: "Cross-browser testing with real DOM interactions",
         },
         phase3: {
-          name: 'True End-to-End Testing',
-          status: 'COMPLETED',
+          name: "True End-to-End Testing",
+          status: "COMPLETED",
           tests: 20,
-          description: 'Complete user journey testing'
+          description: "Complete user journey testing",
         },
         phase4: {
-          name: 'Advanced Testing Features',
-          status: 'COMPLETED',
+          name: "Advanced Testing Features",
+          status: "COMPLETED",
           tests: 15,
-          description: 'Load testing and performance monitoring'
-        }
+          description: "Load testing and performance monitoring",
+        },
       },
       coverage: {
         totalTests: 143,
@@ -216,28 +220,33 @@ class TestRunner {
         serverTests: 12,
         browserTests: 40,
         loadTests: 15,
-        userJourneyTests: 20
+        userJourneyTests: 20,
       },
       recommendations: [
-        'All testing phases completed successfully',
-        'Real WebSocket server integration verified',
-        'Cross-browser compatibility confirmed',
-        'Load testing performance validated',
-        'Ready for production deployment'
-      ]
+        "All testing phases completed successfully",
+        "Real WebSocket server integration verified",
+        "Cross-browser compatibility confirmed",
+        "Load testing performance validated",
+        "Ready for production deployment",
+      ],
     };
 
     // Write report to file
     await fs.writeFile(
-      'tests/test-results/comprehensive-report.json',
-      JSON.stringify(report, null, 2)
+      "tests/test-results/comprehensive-report.json",
+      JSON.stringify(report, null, 2),
     );
 
     // Generate HTML report
     const htmlReport = this.generateHtmlReport(report);
-    await fs.writeFile('tests/test-results/comprehensive-report.html', htmlReport);
+    await fs.writeFile(
+      "tests/test-results/comprehensive-report.html",
+      htmlReport,
+    );
 
-    console.log('📊 Test report generated: tests/test-results/comprehensive-report.html');
+    console.log(
+      "📊 Test report generated: tests/test-results/comprehensive-report.html",
+    );
     return report;
   }
 
@@ -273,11 +282,11 @@ class TestRunner {
             <p>Generated: ${report.summary.timestamp}</p>
             <p>Duration: ${(report.summary.duration / 1000).toFixed(2)} seconds</p>
         </div>
-        
-        <div class="status ${report.summary.status === 'PASSED' ? 'passed' : 'failed'}">
-            ${report.summary.status === 'PASSED' ? '✅ ALL TESTS PASSED' : '❌ SOME TESTS FAILED'}
+
+        <div class="status ${report.summary.status === "PASSED" ? "passed" : "failed"}">
+            ${report.summary.status === "PASSED" ? "✅ ALL TESTS PASSED" : "❌ SOME TESTS FAILED"}
         </div>
-        
+
         <div class="metrics">
             <div class="metric">
                 <div class="metric-value">${report.coverage.totalTests}</div>
@@ -304,21 +313,25 @@ class TestRunner {
                 <div class="metric-label">Browser Tests</div>
             </div>
         </div>
-        
+
         <h2>📋 Testing Phases</h2>
-        ${Object.entries(report.phases).map(([key, phase]) => `
+        ${Object.entries(report.phases)
+          .map(
+            ([key, phase]) => `
             <div class="phase completed">
                 <h3>${phase.name}</h3>
                 <p><strong>Status:</strong> ${phase.status}</p>
                 <p><strong>Tests:</strong> ${phase.tests}</p>
                 <p><strong>Description:</strong> ${phase.description}</p>
             </div>
-        `).join('')}
-        
+        `,
+          )
+          .join("")}
+
         <div class="recommendations">
             <h3>🎯 Recommendations</h3>
             <ul>
-                ${report.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                ${report.recommendations.map((rec) => `<li>${rec}</li>`).join("")}
             </ul>
         </div>
     </div>
@@ -327,45 +340,46 @@ class TestRunner {
   }
 
   async cleanup() {
-    console.log('🧹 Cleaning up resources...');
-    
+    console.log("🧹 Cleaning up resources...");
+
     if (this.rustServer) {
       this.rustServer.kill();
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
-    
-    console.log('✅ Cleanup completed');
+
+    console.log("✅ Cleanup completed");
   }
 
   async run() {
     try {
-      console.log('🚀 Starting comprehensive test suite...');
-      console.log('=' .repeat(60));
-      
+      console.log("🚀 Starting comprehensive test suite...");
+      console.log("=".repeat(60));
+
       // Start Rust server
       const { port } = await this.startRustServer();
       console.log(`📡 Server running on port ${port}`);
-      
+
       // Wait for server to be fully ready
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+
       // Run Rust tests
       await this.runRustTests();
-      
+
       // Run Playwright tests
       await this.runPlaywrightTests();
-      
+
       // Generate comprehensive report
       const report = await this.generateReport();
-      
-      console.log('=' .repeat(60));
-      console.log('🎉 Comprehensive test suite completed successfully!');
+
+      console.log("=".repeat(60));
+      console.log("🎉 Comprehensive test suite completed successfully!");
       console.log(`📊 Total tests: ${report.coverage.totalTests}`);
-      console.log(`⏱️  Duration: ${(report.summary.duration / 1000).toFixed(2)} seconds`);
+      console.log(
+        `⏱️  Duration: ${(report.summary.duration / 1000).toFixed(2)} seconds`,
+      );
       console.log(`📄 Report: tests/test-results/comprehensive-report.html`);
-      
     } catch (error) {
-      console.error('❌ Test suite failed:', error);
+      console.error("❌ Test suite failed:", error);
       process.exit(1);
     } finally {
       await this.cleanup();

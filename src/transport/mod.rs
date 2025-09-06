@@ -1,5 +1,5 @@
 //! Unified transport layer for leptos-ws
-//! 
+//!
 //! This module provides a unified abstraction over different transport protocols
 //! including WebSocket, WebTransport, and Server-Sent Events with automatic
 //! platform detection and progressive enhancement.
@@ -10,11 +10,10 @@ use std::error::Error as StdError;
 use std::fmt;
 use std::pin::Pin;
 
+pub mod adaptive;
+pub mod sse;
 pub mod websocket;
 pub mod webtransport;
-pub mod sse;
-pub mod adaptive;
-
 
 /// A unified message type that can be sent over any transport
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -37,22 +36,22 @@ pub enum MessageType {
 pub enum TransportError {
     #[error("Connection failed: {0}")]
     ConnectionFailed(String),
-    
+
     #[error("Message send failed: {0}")]
     SendFailed(String),
-    
+
     #[error("Message receive failed: {0}")]
     ReceiveFailed(String),
-    
+
     #[error("Protocol error: {0}")]
     ProtocolError(String),
-    
+
     #[error("Authentication failed: {0}")]
     AuthFailed(String),
-    
+
     #[error("Rate limit exceeded")]
     RateLimited,
-    
+
     #[error("Transport not supported")]
     NotSupported,
 }
@@ -77,7 +76,6 @@ pub struct TransportCapabilities {
     pub binary: bool,
 }
 
-
 impl TransportCapabilities {
     pub fn detect() -> Self {
         #[cfg(target_arch = "wasm32")]
@@ -90,7 +88,7 @@ impl TransportCapabilities {
                 binary: true,
             }
         }
-        
+
         #[cfg(not(target_arch = "wasm32"))]
         {
             Self {
@@ -109,16 +107,16 @@ impl TransportCapabilities {
 pub trait Transport: Send + Sync + 'static {
     type Stream: Stream<Item = Result<Message, TransportError>> + Send + Unpin;
     type Sink: Sink<Message, Error = TransportError> + Send + Unpin;
-    
+
     /// Connect to the specified URL
     async fn connect(&mut self, url: &str) -> Result<(), TransportError>;
-    
+
     /// Disconnect from the transport
     async fn disconnect(&mut self) -> Result<(), TransportError>;
-    
+
     /// Split the connection into separate stream and sink
     fn split(self) -> (Self::Stream, Self::Sink);
-    
+
     /// Get the connection state
     fn state(&self) -> ConnectionState;
 }
@@ -162,49 +160,57 @@ impl TransportFactory {
     /// Create the best available transport for the given URL
     pub async fn create_adaptive(
         config: TransportConfig,
-    ) -> Result<Box<dyn Transport<Stream = Pin<Box<dyn Stream<Item = Result<Message, TransportError>> + Send + Unpin>>, Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>>>, TransportError> {
+    ) -> Result<
+        Box<
+            dyn Transport<
+                Stream = Pin<
+                    Box<dyn Stream<Item = Result<Message, TransportError>> + Send + Unpin>,
+                >,
+                Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>,
+            >,
+        >,
+        TransportError,
+    > {
         let capabilities = TransportCapabilities::detect();
-        
+
         // Try WebTransport first if available
         if capabilities.webtransport && config.url.starts_with("https://") {
             if let Ok(transport) = webtransport::WebTransportConnection::new(config.clone()).await {
                 return Ok(Box::new(transport));
             }
         }
-        
+
         // Fallback to WebSocket
         if capabilities.websocket {
             if let Ok(transport) = websocket::WebSocketConnection::new(config.clone()).await {
                 return Ok(Box::new(transport));
             }
         }
-        
+
         // Final fallback to SSE
         if capabilities.sse {
             if let Ok(transport) = sse::SseConnection::new(config).await {
                 return Ok(Box::new(transport));
             }
         }
-        
+
         Err(TransportError::NotSupported)
     }
-    
+
     /// Create a specific transport type
     pub async fn create_websocket(
         config: TransportConfig,
     ) -> Result<websocket::WebSocketConnection, TransportError> {
         websocket::WebSocketConnection::new(config).await
     }
-    
+
     pub async fn create_webtransport(
         config: TransportConfig,
     ) -> Result<webtransport::WebTransportConnection, TransportError> {
         webtransport::WebTransportConnection::new(config).await
     }
-    
-    pub async fn create_sse(
-        config: TransportConfig,
-    ) -> Result<sse::SseConnection, TransportError> {
+
+    pub async fn create_sse(config: TransportConfig) -> Result<sse::SseConnection, TransportError> {
         sse::SseConnection::new(config).await
     }
 }
@@ -212,17 +218,17 @@ impl TransportFactory {
 #[cfg(test)]
 mod tests {
     use super::*;
-    
+
     #[test]
     fn test_transport_capabilities_detection() {
         let caps = TransportCapabilities::detect();
-        
+
         #[cfg(target_arch = "wasm32")]
         {
             assert!(caps.websocket);
             assert!(caps.sse);
         }
-        
+
         #[cfg(not(target_arch = "wasm32"))]
         {
             assert!(caps.websocket);
@@ -230,18 +236,18 @@ mod tests {
             assert!(caps.compression);
         }
     }
-    
+
     #[test]
     fn test_message_creation() {
         let msg = Message {
             data: b"hello".to_vec(),
             message_type: MessageType::Text,
         };
-        
+
         assert_eq!(msg.data, b"hello");
         assert_eq!(msg.message_type, MessageType::Text);
     }
-    
+
     #[test]
     fn test_transport_config_default() {
         let config = TransportConfig::default();

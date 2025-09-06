@@ -102,7 +102,9 @@ async fn test_websocket_message_receiving() {
         };
         let msg_text = serde_json::to_string(&test_msg).unwrap();
         write
-            .send(tokio_tungstenite::tungstenite::Message::Text(msg_text))
+            .send(tokio_tungstenite::tungstenite::Message::Text(
+                msg_text.into(),
+            ))
             .await
             .unwrap();
 

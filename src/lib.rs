@@ -53,8 +53,8 @@ pub mod axum;
 // Re-exports for convenience
 pub use codec::{Codec, HybridCodec, JsonCodec, RkyvCodec, WsMessage};
 pub use reactive::{
-    use_connection_metrics, use_connection_status, use_message_subscription, use_presence,
-    use_websocket, WebSocketContext, WebSocketProvider,
+    WebSocketContext, WebSocketProvider, use_connection_metrics, use_connection_status,
+    use_message_subscription, use_presence, use_websocket,
 };
 pub use transport::{ConnectionState, Message, Transport, TransportConfig, TransportFactory};
 

@@ -376,7 +376,7 @@ impl WebSocketContext {
 
         // Send over real WebSocket connection
         if let Some(sink) = self.ws_sink.lock().await.as_mut() {
-            let ws_message = WsMessage::Text(json.clone());
+            let ws_message = WsMessage::Text(json.clone().into());
             sink.send(ws_message).await.map_err(|e| {
                 TransportError::SendFailed(format!("Failed to send message: {}", e))
             })?;

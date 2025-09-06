@@ -4,7 +4,7 @@
 //! with JSON codec for message serialization.
 
 use leptos::prelude::*;
-use leptos_ws_pro::{use_connection_status, use_websocket, Codec, JsonCodec, WsMessage};
+use leptos_ws_pro::{Codec, JsonCodec, WsMessage, use_connection_status, use_websocket};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

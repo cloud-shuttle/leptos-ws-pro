@@ -163,11 +163,11 @@ impl TransportFactory {
     ) -> Result<
         Box<
             dyn Transport<
-                Stream = Pin<
-                    Box<dyn Stream<Item = Result<Message, TransportError>> + Send + Unpin>,
+                    Stream = Pin<
+                        Box<dyn Stream<Item = Result<Message, TransportError>> + Send + Unpin>,
+                    >,
+                    Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>,
                 >,
-                Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>,
-            >,
         >,
         TransportError,
     > {

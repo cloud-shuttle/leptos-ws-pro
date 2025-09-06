@@ -2,7 +2,7 @@ use crate::{error::Error, messages::ServerSignalUpdate, server_signal::ServerSig
 use leptos::prelude::*;
 use serde_json::Value;
 use std::{collections::HashMap, sync::Arc};
-use tokio::sync::{broadcast::Receiver, RwLock};
+use tokio::sync::{RwLock, broadcast::Receiver};
 
 #[derive(Clone)]
 pub struct ServerSignals {

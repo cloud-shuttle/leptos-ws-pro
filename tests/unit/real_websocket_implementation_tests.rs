@@ -85,7 +85,7 @@ async fn test_websocket_message_sending() {
         data: "Hello, WebSocket!".as_bytes().to_vec(),
         message_type: MessageType::Text,
     };
-    let (mut stream, mut sink) = client.split().await.unwrap();
+    let (mut stream, mut sink) = client.split();
 
     // Then: Message should be sent successfully
     let send_result = sink.send(message.clone()).await;
@@ -120,7 +120,7 @@ async fn test_websocket_binary_message() {
         data: binary_data.clone(),
         message_type: MessageType::Binary,
     };
-    let (mut stream, mut sink) = client.split().await.unwrap();
+    let (mut stream, mut sink) = client.split();
 
     // Then: Binary message should be sent and received
     let send_result = sink.send(message.clone()).await;
@@ -235,7 +235,7 @@ async fn test_websocket_serialized_message() {
         data: json.as_bytes().to_vec(),
         message_type: MessageType::Text,
     };
-    let (mut stream, mut sink) = client.split().await.unwrap();
+    let (mut stream, mut sink) = client.split();
 
     // Then: Should send and receive the serialized message
     let send_result = sink.send(message.clone()).await;
@@ -273,7 +273,7 @@ async fn test_websocket_multiple_messages() {
         .unwrap();
 
     // When: Client sends multiple messages
-    let (mut stream, mut sink) = client.split().await.unwrap();
+    let (mut stream, mut sink) = client.split();
     let messages = vec![
         Message {
             data: "Message 1".as_bytes().to_vec(),

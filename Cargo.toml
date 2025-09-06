@@ -1,6 +1,6 @@
 [package]
 name = "leptos-ws-pro"
-version = "0.2.0-beta"
+version = "0.3.0-alpha"
 edition = "2024"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]

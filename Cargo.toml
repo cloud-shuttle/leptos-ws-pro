@@ -148,6 +148,10 @@ path = "tests/integration/real_websocket_tests.rs"
 name = "webtransport_tests"
 path = "tests/integration/webtransport_tests.rs"
 
+[[test]]
+name = "real_websocket_implementation_tests"
+path = "tests/unit/real_websocket_implementation_tests.rs"
+
 # [[bench]]
 # name = "codec_bench"
 # harness = false

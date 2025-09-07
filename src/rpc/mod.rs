@@ -6,6 +6,8 @@
 #[cfg(feature = "advanced-rpc")]
 pub mod advanced;
 
+pub mod correlation;
+
 use async_trait::async_trait;
 use futures::Stream;
 use leptos::prelude::*;
@@ -15,6 +17,7 @@ use std::task::{Context, Poll};
 
 use crate::codec::{JsonCodec, WsMessage};
 use crate::reactive::WebSocketContext;
+use crate::rpc::correlation::RpcCorrelationManager;
 
 /// RPC method types
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -43,7 +46,8 @@ pub struct RpcResponse<T> {
 }
 
 /// RPC error
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, thiserror::Error)]
+#[error("RPC Error {code}: {message}")]
 pub struct RpcError {
     pub code: i32,
     pub message: String,
@@ -72,6 +76,7 @@ pub struct RpcClient<T> {
     context: WebSocketContext,
     codec: JsonCodec,
     pub next_id: std::sync::atomic::AtomicU64,
+    correlation_manager: RpcCorrelationManager,
     _phantom: std::marker::PhantomData<T>,
 }
 
@@ -84,6 +89,7 @@ where
             context,
             codec,
             next_id: std::sync::atomic::AtomicU64::new(1),
+            correlation_manager: RpcCorrelationManager::new(),
             _phantom: std::marker::PhantomData,
         }
     }
@@ -156,20 +162,67 @@ where
             method_type,
         };
 
-        let wrapped = WsMessage::new(request);
+        // Encode request as JSON
+        let request_json = serde_json::to_string(&request)
+            .map_err(|e| RpcError {
+                code: -32700,
+                message: format!("Parse error: {}", e),
+                data: None,
+            })?;
 
-        // Send request
-        // Note: In a real implementation, this would need to be async
-        // For now, we'll just store the message
-        let _ = serde_json::to_vec(&wrapped);
+        // Send request through WebSocket context
+        let send_result = self.context.send_message(&request_json).await;
 
-        // Wait for response (simplified - in real implementation, you'd use a channel)
-        // This is a placeholder for the actual response handling
-        Err(RpcError {
-            code: -1,
-            message: "Response handling not implemented".to_string(),
-            data: None,
-        })
+        match send_result {
+            Ok(_) => {
+                // Register request for correlation and wait for response
+                let response_rx = self.correlation_manager.register_request(
+                    id.clone(),
+                    method.to_string(),
+                );
+
+                // Wait for actual response from WebSocket
+                match response_rx.await {
+                    Ok(Ok(response)) => {
+                        // Got successful response
+                        if let Some(result) = response.result {
+                            serde_json::from_value(result).map_err(|e| RpcError {
+                                code: -32603,
+                                message: format!("Deserialization error: {}", e),
+                                data: None,
+                            })
+                        } else if let Some(error) = response.error {
+                            Err(error)
+                        } else {
+                            Err(RpcError {
+                                code: -32603,
+                                message: "Empty response received".to_string(),
+                                data: None,
+                            })
+                        }
+                    }
+                    Ok(Err(rpc_error)) => {
+                        // Got error response
+                        Err(rpc_error)
+                    }
+                    Err(_) => {
+                        // Channel was dropped (timeout or cancellation)
+                        Err(RpcError {
+                            code: -32603,
+                            message: "Request was cancelled or timed out".to_string(),
+                            data: None,
+                        })
+                    }
+                }
+            }
+            Err(transport_error) => {
+                Err(RpcError {
+                    code: -32603,
+                    message: format!("Transport error: {}", transport_error),
+                    data: None,
+                })
+            }
+        }
     }
 
     pub fn generate_id(&self) -> String {
@@ -195,9 +248,34 @@ where
     type Item = Result<T, RpcError>;
 
     fn poll_next(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Option<Self::Item>> {
-        // This is a simplified implementation
-        // In a real implementation, you'd filter messages by subscription ID
-        // and return the appropriate data
+        // Try to get messages from the WebSocket context
+        let received_messages: Vec<String> = self.context.get_received_messages();
+
+        // Filter messages for this subscription ID
+        for message_json in received_messages {
+            // Try to parse as RPC response
+            if let Ok(response) = serde_json::from_str::<RpcResponse<serde_json::Value>>(&message_json) {
+                if response.id == self.id {
+                    // This is for our subscription
+                    if let Some(result) = response.result {
+                        // Try to deserialize the result to our target type
+                        match serde_json::from_value::<T>(result) {
+                            Ok(data) => return Poll::Ready(Some(Ok(data))),
+                            Err(e) => return Poll::Ready(Some(Err(RpcError {
+                                code: -32603,
+                                message: format!("Deserialization error: {}", e),
+                                data: None,
+                            }))),
+                        }
+                    } else if let Some(error) = response.error {
+                        return Poll::Ready(Some(Err(error)));
+                    }
+                }
+            }
+        }
+
+        // No matching messages found, return Pending
+        // In a real implementation, this would register a waker
         Poll::Pending
     }
 }

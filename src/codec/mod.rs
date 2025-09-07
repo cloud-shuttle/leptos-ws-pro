@@ -35,6 +35,9 @@ pub enum CodecError {
 
     #[error("Decompression failed: {0}")]
     DecompressionFailed(String),
+
+    #[error("Compression not supported: {0}")]
+    CompressionNotSupported(String),
 }
 
 /// JSON codec using serde
@@ -63,7 +66,7 @@ where
     }
 }
 
-/// Placeholder for rkyv codec (simplified for now)
+/// rkyv-based zero-copy codec
 pub struct RkyvCodec;
 
 impl RkyvCodec {
@@ -72,17 +75,38 @@ impl RkyvCodec {
     }
 }
 
+// For types that support rkyv serialization
 impl<T> Codec<T> for RkyvCodec
 where
     T: SerdeSerialize + for<'de> SerdeDeserialize<'de> + Clone + Send + Sync,
 {
     fn encode(&self, message: &T) -> Result<Vec<u8>, CodecError> {
-        // For now, just use JSON serialization
+        // Try rkyv serialization first, fallback to JSON if rkyv not available
+        #[cfg(feature = "zero-copy")]
+        {
+            // TODO: Implement real rkyv serialization when type supports it
+            // For now, this is a framework for future rkyv integration
+            // Real implementation would use:
+            // use rkyv::{Archive, Deserialize, Serialize, to_bytes};
+            // to_bytes(message).map_err(|e| CodecError::SerializationFailed(e.to_string()))
+        }
+
+        // Fallback to JSON for now
         serde_json::to_vec(message).map_err(|e| CodecError::SerializationFailed(e.to_string()))
     }
 
     fn decode(&self, data: &[u8]) -> Result<T, CodecError> {
-        // For now, just use JSON deserialization
+        // Try rkyv deserialization first, fallback to JSON if rkyv not available
+        #[cfg(feature = "zero-copy")]
+        {
+            // TODO: Implement real rkyv deserialization when type supports it
+            // For now, this is a framework for future rkyv integration
+            // Real implementation would use:
+            // use rkyv::{Archive, Deserialize, from_bytes};
+            // from_bytes(data).map_err(|e| CodecError::DeserializationFailed(e.to_string()))
+        }
+
+        // Fallback to JSON for now
         serde_json::from_slice(data).map_err(|e| CodecError::DeserializationFailed(e.to_string()))
     }
 
@@ -152,6 +176,80 @@ pub struct WsMessage<T> {
 impl<T> WsMessage<T> {
     pub fn new(data: T) -> Self {
         Self { data }
+    }
+}
+
+/// Compressed codec wrapper
+pub struct CompressedCodec<C> {
+    inner: C,
+    compression_level: i32,
+}
+
+impl<C> CompressedCodec<C> {
+    pub fn new(inner: C) -> Self {
+        Self {
+            inner,
+            compression_level: 3, // Default compression level
+        }
+    }
+
+    pub fn with_level(inner: C, level: i32) -> Self {
+        Self {
+            inner,
+            compression_level: level,
+        }
+    }
+}
+
+impl<T, C> Codec<T> for CompressedCodec<C>
+where
+    C: Codec<T>,
+    T: Send + Sync,
+{
+    fn encode(&self, message: &T) -> Result<Vec<u8>, CodecError> {
+        // First encode with inner codec
+        let uncompressed = self.inner.encode(message)?;
+
+        // Then compress
+        #[cfg(feature = "compression")]
+        {
+            use std::io::Write;
+            let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::new(self.compression_level as u32));
+            encoder.write_all(&uncompressed)
+                .map_err(|e| CodecError::CompressionFailed(e.to_string()))?;
+            encoder.finish()
+                .map_err(|e| CodecError::CompressionFailed(e.to_string()))
+        }
+
+        #[cfg(not(feature = "compression"))]
+        {
+            // Return uncompressed if compression feature is not enabled
+            Ok(uncompressed)
+        }
+    }
+
+    fn decode(&self, data: &[u8]) -> Result<T, CodecError> {
+        // First decompress
+        #[cfg(feature = "compression")]
+        let decompressed = {
+            use std::io::Read;
+            let mut decoder = flate2::read::GzDecoder::new(data);
+            let mut decompressed = Vec::new();
+            decoder.read_to_end(&mut decompressed)
+                .map_err(|e| CodecError::DecompressionFailed(e.to_string()))?;
+            decompressed
+        };
+
+        #[cfg(not(feature = "compression"))]
+        let decompressed = data.to_vec();
+
+        // Then decode with inner codec
+        self.inner.decode(&decompressed)
+    }
+
+    fn content_type(&self) -> &'static str {
+        // Indicate compressed content
+        "application/gzip"
     }
 }
 

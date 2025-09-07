@@ -1,6 +1,6 @@
 [package]
 name = "leptos-ws-pro"
-version = "0.6.0-beta"
+version = "0.7.0"
 edition = "2024"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]
@@ -70,6 +70,7 @@ crossbeam-channel = { version = "0.5", optional = true }
 # Cryptography and compression
 ring = { version = "0.17", optional = true }
 zstd = { version = "0.13", optional = true }
+flate2 = { version = "1.0", optional = true }
 
 # Error handling
 thiserror = "2.0"
@@ -89,13 +90,14 @@ json-patch = { version = "4.0", optional = true }
 
 # Advanced RPC features
 uuid = { version = "1.18", features = ["v4"], optional = true }
+rand = { version = "0.9", optional = true }
 
 # Development and testing
 tempfile = { version = "3.21", optional = true }
 criterion = { version = "0.7", features = ["html_reports"], optional = true }
 
 [features]
-default = ["client", "server", "compression", "metrics", "dep:futures", "dep:tracing", "dep:num-bigint"]
+default = ["client", "server", "compression", "metrics", "dep:futures", "dep:tracing", "dep:num-bigint", "dep:uuid", "dep:rand"]
 
 # Platform support
 client = ["gloo-net", "web-sys", "reqwest"]
@@ -109,7 +111,7 @@ sse = ["client", "reqwest", "dep:eventsource-stream", "dep:hyper", "dep:hyper-ut
 adaptive = ["websocket", "sse", "webtransport"]
 
 # Performance and features
-compression = ["dep:zstd"]
+compression = ["dep:zstd", "dep:flate2"]
 zero-copy = ["rkyv/std"]
 simd = ["dep:ring"]
 collaboration = ["dep:num-bigint", "dep:json-patch"]
@@ -119,10 +121,10 @@ metrics = ["dep:metrics", "dep:metrics-exporter-prometheus"]
 tracing = ["dep:tracing", "dep:tracing-subscriber"]
 
 # Advanced RPC features
-advanced-rpc = ["uuid"]
+advanced-rpc = ["dep:uuid"]
 
 # Development and testing
-dev = ["dep:tempfile", "dep:criterion"]
+dev = ["dep:tempfile", "dep:criterion", "dep:rand"]
 testing = ["dep:tempfile"]
 
 # Server framework integration
@@ -220,6 +222,31 @@ path = "tests/unit/performance_benchmark_tests.rs"
 [[test]]
 name = "stress_testing_tests"
 path = "tests/unit/stress_testing_tests.rs"
+
+# V1.0 TDD Test Suite
+[[test]]
+name = "v1_core_transport_tests"
+path = "tests/unit/v1_core_transport_tests.rs"
+
+[[test]]
+name = "v1_core_codec_tests"
+path = "tests/unit/v1_core_codec_tests.rs"
+
+[[test]]
+name = "v1_core_rpc_tests"
+path = "tests/unit/v1_core_rpc_tests.rs"
+
+[[test]]
+name = "v1_core_reactive_tests"
+path = "tests/unit/v1_core_reactive_tests.rs"
+
+[[test]]
+name = "v1_integration_tests"
+path = "tests/integration/v1_integration_tests.rs"
+
+[[test]]
+name = "quick_validation"
+path = "tests/quick_validation.rs"
 
 # [[bench]]
 # name = "codec_bench"

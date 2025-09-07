@@ -52,12 +52,15 @@ pub enum TransportError {
     #[error("Rate limit exceeded")]
     RateLimited,
 
-    #[error("Transport not supported")]
-    NotSupported,
+    #[error("Transport not supported: {0}")]
+    NotSupported(String),
+
+    #[error("Not connected")]
+    NotConnected,
 }
 
 /// Connection state for monitoring
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, serde::Serialize, serde::Deserialize)]
 pub enum ConnectionState {
     Disconnected,
     Connecting,
@@ -119,6 +122,17 @@ pub trait Transport: Send + Sync + 'static {
 
     /// Get the connection state
     fn state(&self) -> ConnectionState;
+
+    /// Send a message (default implementation for compatibility)
+    async fn send_message(&self, _message: &Message) -> Result<(), TransportError> {
+        // Default implementation returns not supported
+        Err(TransportError::NotSupported("send_message not implemented".to_string()))
+    }
+
+    /// Create a bidirectional stream (WebTransport specific)
+    async fn create_bidirectional_stream(&mut self) -> Result<(), TransportError> {
+        Err(TransportError::NotSupported("Bidirectional streams not supported".to_string()))
+    }
 }
 
 /// A connection that can be split into separate stream and sink
@@ -134,9 +148,12 @@ pub struct TransportConfig {
     pub protocols: Vec<String>,
     pub headers: std::collections::HashMap<String, String>,
     pub timeout: std::time::Duration,
+    pub connection_timeout: std::time::Duration,
     pub heartbeat_interval: Option<std::time::Duration>,
     pub max_reconnect_attempts: Option<usize>,
     pub reconnect_delay: std::time::Duration,
+    pub max_message_size: usize,
+    pub enable_compression: bool,
 }
 
 impl Default for TransportConfig {
@@ -146,9 +163,12 @@ impl Default for TransportConfig {
             protocols: Vec::new(),
             headers: std::collections::HashMap::new(),
             timeout: std::time::Duration::from_secs(30),
+            connection_timeout: std::time::Duration::from_secs(10),
             heartbeat_interval: Some(std::time::Duration::from_secs(30)),
             max_reconnect_attempts: Some(5),
             reconnect_delay: std::time::Duration::from_secs(1),
+            max_message_size: 1024 * 1024, // 1MB
+            enable_compression: false,
         }
     }
 }
@@ -194,7 +214,7 @@ impl TransportFactory {
             }
         }
 
-        Err(TransportError::NotSupported)
+        Err(TransportError::NotSupported("No suitable transport available".to_string()))
     }
 
     /// Create a specific transport type

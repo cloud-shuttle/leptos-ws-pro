@@ -26,6 +26,10 @@ pub mod codec;
 pub mod reactive;
 pub mod rpc;
 pub mod transport;
+pub mod error_handling;
+pub mod security;
+pub mod performance;
+pub mod zero_copy;
 // pub mod collaboration;
 // pub mod resilience;
 // pub mod middleware;
@@ -51,7 +55,7 @@ mod client_signals;
 pub mod axum;
 
 // Re-exports for convenience
-pub use codec::{Codec, HybridCodec, JsonCodec, RkyvCodec, WsMessage};
+pub use codec::{Codec, CodecError, CompressedCodec, HybridCodec, JsonCodec, RkyvCodec, WsMessage};
 pub use reactive::{
     WebSocketContext, WebSocketProvider, use_connection_metrics, use_connection_status,
     use_message_subscription, use_presence, use_websocket,

@@ -8,45 +8,46 @@ use leptos_ws_pro::codec::{
 };
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TestData {
+    id: u64,
+    name: String,
+    values: Vec<i32>,
+    metadata: std::collections::HashMap<String, String>,
+}
+
+impl TestData {
+    pub fn new() -> Self {
+        Self {
+            id: 12345,
+            name: "test_data".to_string(),
+            values: vec![1, 2, 3, 4, 5],
+            metadata: [
+                ("key1".to_string(), "value1".to_string()),
+                ("key2".to_string(), "value2".to_string()),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
+        }
+    }
+
+    pub fn large() -> Self {
+        Self {
+            id: u64::MAX,
+            name: "x".repeat(10000), // Large string
+            values: (0..10000).collect(), // Large vector
+            metadata: (0..1000)
+                .map(|i| (format!("key_{}", i), format!("value_{}", i)))
+                .collect(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod codec_core_tests {
     use super::*;
 
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    struct TestData {
-        id: u64,
-        name: String,
-        values: Vec<i32>,
-        metadata: std::collections::HashMap<String, String>,
-    }
-
-    impl TestData {
-        fn new() -> Self {
-            Self {
-                id: 12345,
-                name: "test_data".to_string(),
-                values: vec![1, 2, 3, 4, 5],
-                metadata: [
-                    ("key1".to_string(), "value1".to_string()),
-                    ("key2".to_string(), "value2".to_string()),
-                ]
-                .iter()
-                .cloned()
-                .collect(),
-            }
-        }
-
-        fn large() -> Self {
-            Self {
-                id: u64::MAX,
-                name: "x".repeat(10000), // Large string
-                values: (0..10000).collect(), // Large vector
-                metadata: (0..1000)
-                    .map(|i| (format!("key_{}", i), format!("value_{}", i)))
-                    .collect(), // Large map
-            }
-        }
-    }
 
     #[test]
     fn test_json_codec_basic_roundtrip() {
@@ -56,7 +57,7 @@ mod codec_core_tests {
         // Test encode
         let encoded = codec.encode(&data).unwrap();
         assert!(!encoded.is_empty());
-        assert_eq!(codec.content_type(), "application/json");
+        assert_eq!(<JsonCodec as Codec<TestData>>::content_type(&codec), "application/json");
 
         // Verify it's valid JSON
         let json_value: serde_json::Value = serde_json::from_slice(&encoded).unwrap();
@@ -95,7 +96,7 @@ mod codec_core_tests {
 
         // Test decode with invalid JSON
         let invalid_json = b"invalid json data {{{";
-        let result = codec.decode::<TestData>(invalid_json);
+        let result = <JsonCodec as Codec<TestData>>::decode(&codec, invalid_json);
         assert!(result.is_err());
 
         match result {
@@ -113,7 +114,7 @@ mod codec_core_tests {
 
         let encoded = codec.encode(&data).unwrap();
         assert!(!encoded.is_empty());
-        assert_eq!(codec.content_type(), "application/rkyv");
+        assert_eq!(<RkyvCodec as Codec<TestData>>::content_type(&codec), "application/rkyv");
 
         let decoded = codec.decode(&encoded).unwrap();
         assert_eq!(data, decoded);
@@ -122,7 +123,7 @@ mod codec_core_tests {
     #[test]
     fn test_hybrid_codec_creation() {
         let codec = HybridCodec::new().unwrap();
-        assert_eq!(codec.content_type(), "application/hybrid");
+        assert_eq!(<HybridCodec as Codec<TestData>>::content_type(&codec), "application/hybrid");
     }
 
     #[test]

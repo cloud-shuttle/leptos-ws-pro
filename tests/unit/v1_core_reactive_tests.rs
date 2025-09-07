@@ -11,19 +11,20 @@ use leptos_ws_pro::reactive::{
 use leptos_ws_pro::transport::{ConnectionState, Message, MessageType, TransportError};
 use leptos_ws_pro::codec::JsonCodec;
 use serde::{Deserialize, Serialize};
-use std::collections::{HashMap, VecDeque};
-use std::time::{Duration, Instant};
+use std::collections::HashMap;
+use std::time::Instant;
+
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct TestMessage {
+    id: u32,
+    content: String,
+    timestamp: u64,
+}
 
 #[cfg(test)]
 mod reactive_core_tests {
     use super::*;
 
-    #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-    struct TestMessage {
-        id: u32,
-        content: String,
-        timestamp: u64,
-    }
 
     #[test]
     fn test_websocket_provider_creation() {

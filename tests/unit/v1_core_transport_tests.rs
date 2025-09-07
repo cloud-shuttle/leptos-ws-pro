@@ -4,11 +4,11 @@
 //! following TDD principles for v1.0 release.
 
 use leptos_ws_pro::transport::{
-    ConnectionState, Message, MessageType, Transport, TransportCapabilities, TransportConfig,
+    ConnectionState, Message, MessageType, TransportCapabilities, TransportConfig,
     TransportError, TransportFactory,
 };
 use std::time::Duration;
-use tokio_test;
+// use tokio_test; // Not needed for these tests
 
 #[cfg(test)]
 mod transport_core_tests {
@@ -17,16 +17,16 @@ mod transport_core_tests {
     #[test]
     fn test_message_creation_all_types() {
         let test_cases = vec![
-            (MessageType::Text, b"hello world"),
-            (MessageType::Binary, &[0x01, 0x02, 0x03, 0xFF]),
-            (MessageType::Ping, b"ping"),
-            (MessageType::Pong, b"pong"),
-            (MessageType::Close, b""),
+            (MessageType::Text, b"hello world".to_vec()),
+            (MessageType::Binary, vec![0x01, 0x02, 0x03, 0xFF]),
+            (MessageType::Ping, b"ping".to_vec()),
+            (MessageType::Pong, b"pong".to_vec()),
+            (MessageType::Close, b"".to_vec()),
         ];
 
         for (msg_type, data) in test_cases {
             let message = Message {
-                data: data.to_vec(),
+                data: data.clone(),
                 message_type: msg_type.clone(),
             };
 
@@ -83,6 +83,9 @@ mod transport_core_tests {
             heartbeat_interval: Some(Duration::from_secs(15)),
             max_reconnect_attempts: Some(10),
             reconnect_delay: Duration::from_secs(2),
+            connection_timeout: Duration::from_secs(30),
+            enable_compression: true,
+            max_message_size: 1024 * 1024, // 1MB
         };
 
         assert_eq!(custom_config.url, "wss://example.com/ws");
@@ -127,7 +130,7 @@ mod transport_core_tests {
             TransportError::ProtocolError("Invalid frame".to_string()),
             TransportError::AuthFailed("Invalid token".to_string()),
             TransportError::RateLimited,
-            TransportError::NotSupported,
+            TransportError::NotSupported("Feature not supported".to_string()),
         ];
 
         for error in errors {
@@ -154,7 +157,7 @@ mod transport_core_tests {
         };
 
         match TransportFactory::create_adaptive(https_config).await {
-            Ok(_) | Err(TransportError::NotSupported) => {
+            Ok(_) | Err(TransportError::NotSupported(_)) => {
                 // Either transport created or not supported (expected on some platforms)
                 assert!(true);
             }
@@ -243,10 +246,13 @@ mod transport_factory_tests {
         ];
 
         for (url, transport_type) in test_configs {
-            let config = TransportConfig {
-                url: url.to_string(),
-                ..Default::default()
-            };
+        let config = TransportConfig {
+            url: url.to_string(),
+            connection_timeout: Duration::from_secs(30),
+            enable_compression: false,
+            max_message_size: 1024 * 1024,
+            ..Default::default()
+        };
 
             match transport_type {
                 "websocket" => {
@@ -267,7 +273,7 @@ mod transport_factory_tests {
                     let result = TransportFactory::create_webtransport(config).await;
                     match result {
                         Ok(_) => assert!(true),
-                        Err(TransportError::NotSupported) | Err(TransportError::ConnectionFailed(_)) => {
+                        Err(TransportError::NotSupported(_)) | Err(TransportError::ConnectionFailed(_)) => {
                             // Expected on platforms without WebTransport
                             assert!(true);
                         }
@@ -311,6 +317,9 @@ mod transport_config_edge_cases {
             heartbeat_interval: None,
             max_reconnect_attempts: None,
             reconnect_delay: Duration::from_secs(0),
+            connection_timeout: Duration::from_secs(30),
+            enable_compression: false,
+            max_message_size: 1024 * 1024,
         };
 
         // Should handle empty/zero values gracefully
@@ -334,6 +343,9 @@ mod transport_config_edge_cases {
             heartbeat_interval: Some(Duration::from_millis(100)), // Very frequent
             max_reconnect_attempts: Some(1000), // Many attempts
             reconnect_delay: Duration::from_millis(1), // Very short delay
+            connection_timeout: Duration::from_secs(30),
+            enable_compression: true,
+            max_message_size: 10 * 1024 * 1024, // 10MB
         };
 
         assert_eq!(config.protocols.len(), 100);

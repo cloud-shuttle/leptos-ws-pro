@@ -4,13 +4,14 @@
 
 use leptos_ws_pro::{
     codec::{JsonCodec, RkyvCodec, HybridCodec, Codec, WsMessage},
-    error_handling::{ErrorContext, ErrorRecoveryHandler, CircuitBreaker, CircuitBreakerState},
+    error_handling::{ErrorContext, ErrorRecoveryHandler, CircuitBreaker},
     performance::{PerformanceManager, ConnectionPool, MessageBatcher, MessageCache},
     security::{RateLimiter, InputValidator, ThreatDetector, CsrfProtector, TokenBucket},
     transport::{TransportConfig, TransportCapabilities, Message, MessageType},
     zero_copy::{ZeroCopyBuffer, ZeroCopyCodec, MessageBatch},
     rpc::correlation::RpcCorrelationManager,
 };
+use leptos_ws_pro::error_handling::circuit_breaker::CircuitBreakerState;
 
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -63,22 +64,19 @@ mod coverage_tests {
         assert_eq!(breaker.get_state(), CircuitBreakerState::Open);
     }
 
-    #[test]
-    fn test_performance_manager() {
-        let manager = PerformanceManager::new();
+    #[tokio::test]
+    async fn test_performance_manager() {
+        let manager = PerformanceManager::new(leptos_ws_pro::performance::PerformanceConfig::default());
 
         // Test connection pool
-        let pool = ConnectionPool::new(10);
+        let pool = ConnectionPool::new(leptos_ws_pro::performance::ConnectionPoolConfig::default()).await.unwrap();
         let connection = pool.get_connection();
         assert!(connection.is_ok());
 
         // Test message batcher
         let mut batcher = MessageBatcher::new(100, Duration::from_millis(100));
-        let message = Message {
-            message_type: MessageType::Text,
-            data: "test".as_bytes().to_vec(),
-        };
-        batcher.add_message(message);
+        let message_data = "test".as_bytes().to_vec();
+        batcher.add_message(message_data).await.unwrap();
         assert_eq!(batcher.pending_count(), 1);
 
         // Test message cache
@@ -263,7 +261,7 @@ mod coverage_tests {
         let mut handler = ErrorRecoveryHandler::new();
 
         // Test error handling
-        let error = leptos_ws_pro::error::LeptosWsError::Transport(
+        let error = leptos_ws_pro::error_handling::LeptosWsError::Transport(
             leptos_ws_pro::transport::TransportError::ConnectionFailed("test".to_string())
         );
         let result = handler.handle_error(&error, || Ok::<(), _>(()));

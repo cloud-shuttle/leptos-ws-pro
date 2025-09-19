@@ -5,18 +5,15 @@
 
 #[cfg(feature = "advanced-rpc")]
 
-use crate::transport::{Message, MessageType, Transport, TransportError};
-use async_trait::async_trait;
-use futures::{Sink, SinkExt, Stream, StreamExt};
+use crate::transport::{Message, MessageType};
+use crate::transport::{Transport, TransportError};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::pin::Pin;
 use std::sync::{Arc, Mutex};
-use std::task::{Context, Poll};
 use std::time::{Duration, Instant};
-use tokio::sync::{mpsc, oneshot};
-#[cfg(feature = "advanced-rpc")]
 use uuid::Uuid;
+
+use tokio::sync::{mpsc, oneshot};
 
 /// RPC Request structure
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]

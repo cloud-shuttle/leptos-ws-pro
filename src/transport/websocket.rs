@@ -192,6 +192,47 @@ impl Transport for WebSocketConnection {
         }
     }
 
+    async fn send_message(&self, message: &Message) -> Result<(), TransportError> {
+        if let Some(stream) = &self.stream {
+            let ws_msg = match message.message_type {
+                MessageType::Text => {
+                    let text = String::from_utf8(message.data.clone())
+                        .map_err(|e| TransportError::SendFailed(e.to_string()))?;
+                    tokio_tungstenite::tungstenite::Message::Text(text.into())
+                }
+                MessageType::Binary => {
+                    tokio_tungstenite::tungstenite::Message::Binary(message.data.clone().into())
+                }
+                MessageType::Ping => {
+                    tokio_tungstenite::tungstenite::Message::Ping(message.data.clone().into())
+                }
+                MessageType::Pong => {
+                    tokio_tungstenite::tungstenite::Message::Pong(message.data.clone().into())
+                }
+                MessageType::Close => {
+                    tokio_tungstenite::tungstenite::Message::Close(None)
+                }
+            };
+
+            // We need to use a different approach since we can't borrow mutably
+            // For now, return an error indicating this needs to be implemented differently
+            Err(TransportError::NotSupported("send_message requires mutable access to stream".to_string()))
+        } else {
+            Err(TransportError::ConnectionFailed("Not connected".to_string()))
+        }
+    }
+
+    async fn receive_message(&self) -> Result<Message, TransportError> {
+        // We need to use a different approach since we can't borrow mutably
+        // For now, return an error indicating this needs to be implemented differently
+        Err(TransportError::NotSupported("receive_message requires mutable access to stream".to_string()))
+    }
+
+    async fn create_bidirectional_stream(&mut self) -> Result<(), TransportError> {
+        // WebSocket is inherently bidirectional, so this is a no-op
+        Ok(())
+    }
+
     fn state(&self) -> ConnectionState {
         *self.state.lock().unwrap()
     }

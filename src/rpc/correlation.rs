@@ -199,6 +199,54 @@ impl RpcCorrelationManager {
 
         count
     }
+
+    /// Register a request and return both request ID and receiver
+    pub fn register_request_with_id(
+        &self,
+        request_id: String,
+        method: String,
+    ) -> (String, tokio::sync::oneshot::Receiver<Result<RpcResponse<serde_json::Value>, RpcError>>) {
+        let (response_tx, response_rx) = oneshot::channel();
+
+        let pending_request = PendingRequest {
+            response_tx,
+            timeout_at: Instant::now() + self.default_timeout,
+            method: method.clone(),
+        };
+
+        self.pending_requests.lock().unwrap().insert(request_id.clone(), pending_request);
+        (request_id, response_rx)
+    }
+
+    /// Wait for a response to a specific request ID
+    pub async fn wait_for_response(
+        &self,
+        request_id: &str,
+        timeout: Duration,
+    ) -> Result<Result<RpcResponse<serde_json::Value>, RpcError>, String> {
+        // Register the request and get the receiver
+        let response_rx = self.register_request(request_id.to_string(), "unknown".to_string());
+
+        // Wait for the response with timeout
+        tokio::time::timeout(timeout, response_rx)
+            .await
+            .map_err(|_| "Request timeout".to_string())?
+            .map_err(|_| "Channel closed".to_string())
+    }
+
+    /// Complete a request with a response
+    pub fn complete_request(
+        &self,
+        request_id: &str,
+        response: Result<RpcResponse<serde_json::Value>, RpcError>,
+    ) -> Result<(), String> {
+        match response {
+            Ok(rpc_response) => self.handle_response(rpc_response)
+                .map_err(|e| e.message),
+            Err(error) => self.handle_error_response(request_id.to_string(), error)
+                .map_err(|e| e.message),
+        }
+    }
 }
 
 impl Default for RpcCorrelationManager {

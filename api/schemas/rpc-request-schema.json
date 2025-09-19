@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://leptos-ws-pro.dev/schemas/rpc-request.json",
+  "title": "RPC Request",
+  "description": "Remote procedure call request",
+  "type": "object",
+  "required": ["id", "method", "params"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Unique request identifier",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "method": {
+      "$ref": "#/definitions/RpcMethod"
+    },
+    "params": {
+      "type": "object",
+      "description": "Method parameters"
+    },
+    "timeout": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 30000,
+      "default": 10000,
+      "description": "Request timeout in milliseconds"
+    }
+  },
+  "definitions": {
+    "RpcMethod": {
+      "type": "string",
+      "enum": [
+        "SendMessage",
+        "GetMessages",
+        "SubscribeMessages",
+        "UnsubscribeMessages",
+        "GetConnectionState",
+        "GetServerInfo",
+        "Heartbeat",
+        "Ping"
+      ],
+      "description": "Available RPC methods"
+    }
+  }
+}

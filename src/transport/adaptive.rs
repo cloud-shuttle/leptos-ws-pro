@@ -15,6 +15,52 @@ pub struct TransportCapabilities {
     pub sse_supported: bool,
 }
 
+impl TransportCapabilities {
+    /// Detect available transport capabilities
+    pub fn detect() -> Self {
+        Self {
+            websocket_supported: true, // WebSocket is always supported in our implementation
+            webtransport_supported: true, // WebTransport is now implemented
+            sse_supported: true, // SSE is now implemented
+        }
+    }
+
+    /// Check if WebTransport is supported
+    pub fn supports_webtransport(&self) -> bool {
+        self.webtransport_supported
+    }
+
+    /// Check if WebSocket is supported
+    pub fn supports_websocket(&self) -> bool {
+        self.websocket_supported
+    }
+
+    /// Check if SSE is supported
+    pub fn supports_sse(&self) -> bool {
+        self.sse_supported
+    }
+
+    /// Check if streaming is supported (WebTransport feature)
+    pub fn supports_streaming(&self) -> bool {
+        self.webtransport_supported
+    }
+
+    /// Check if multiplexing is supported (WebTransport feature)
+    pub fn supports_multiplexing(&self) -> bool {
+        self.webtransport_supported
+    }
+
+    /// Check if bidirectional communication is supported
+    pub fn supports_bidirectional(&self) -> bool {
+        self.websocket_supported || self.webtransport_supported
+    }
+
+    /// Check if unidirectional communication is supported
+    pub fn supports_unidirectional(&self) -> bool {
+        self.sse_supported
+    }
+}
+
 /// Performance metrics for adaptive transport
 #[derive(Debug, Clone)]
 pub struct PerformanceMetrics {
@@ -56,11 +102,7 @@ impl AdaptiveTransport {
     }
 
     pub async fn detect_capabilities() -> TransportCapabilities {
-        TransportCapabilities {
-            websocket_supported: true, // WebSocket is always supported in our implementation
-            webtransport_supported: true, // WebTransport is now implemented
-            sse_supported: true, // SSE is now implemented
-        }
+        TransportCapabilities::detect()
     }
 
     pub fn selected_transport(&self) -> String {
@@ -208,5 +250,101 @@ impl Transport for AdaptiveTransport {
 
     fn state(&self) -> ConnectionState {
         *self.state.lock().unwrap()
+    }
+}
+
+impl AdaptiveTransport {
+    /// Negotiate the best protocol from a list of supported protocols
+    pub async fn negotiate_protocol(&mut self, supported_protocols: Vec<String>) -> Result<(), TransportError> {
+        // Try protocols in order of preference
+        for protocol in supported_protocols {
+            match protocol.as_str() {
+                "websocket" if self.capabilities.websocket_supported => {
+                    if self.try_websocket_connection("ws://localhost:8080").await.is_ok() {
+                        *self.selected_transport.lock().unwrap() = "WebSocket".to_string();
+                        return Ok(());
+                    }
+                }
+                "webtransport" if self.capabilities.webtransport_supported => {
+                    if self.try_webtransport_connection("https://localhost:8080").await.is_ok() {
+                        *self.selected_transport.lock().unwrap() = "WebTransport".to_string();
+                        return Ok(());
+                    }
+                }
+                "sse" if self.capabilities.sse_supported => {
+                    if self.try_sse_connection("http://localhost:8080").await.is_ok() {
+                        *self.selected_transport.lock().unwrap() = "SSE".to_string();
+                        return Ok(());
+                    }
+                }
+                _ => continue,
+            }
+        }
+        Err(TransportError::ConnectionFailed("No supported protocol available".to_string()))
+    }
+
+    /// Check if WebTransport is available
+    pub fn is_webtransport_available(&self) -> bool {
+        self.capabilities.webtransport_supported
+    }
+
+    /// Check if WebSocket is available
+    pub fn is_websocket_available(&self) -> bool {
+        self.capabilities.websocket_supported
+    }
+
+    /// Check if SSE is available
+    pub fn is_sse_available(&self) -> bool {
+        self.capabilities.sse_supported
+    }
+
+    /// Get the current protocol being used
+    pub async fn current_protocol(&self) -> String {
+        self.selected_transport.lock().unwrap().clone()
+    }
+
+    /// Check if the transport is connected
+    pub fn is_connected(&self) -> bool {
+        matches!(*self.state.lock().unwrap(), ConnectionState::Connected)
+    }
+
+    /// Simulate a protocol failure for testing
+    pub async fn simulate_protocol_failure(&mut self, protocol: String) {
+        if *self.selected_transport.lock().unwrap() == protocol {
+            *self.state.lock().unwrap() = ConnectionState::Failed;
+        }
+    }
+
+    /// Fallback to the next available protocol
+    pub async fn fallback_to_next_protocol(&mut self, fallback_protocols: Vec<String>) -> Result<(), TransportError> {
+        *self.state.lock().unwrap() = ConnectionState::Reconnecting;
+
+        for protocol in fallback_protocols {
+            match protocol.as_str() {
+                "websocket" if self.capabilities.websocket_supported => {
+                    if self.try_websocket_connection("ws://localhost:8080").await.is_ok() {
+                        *self.selected_transport.lock().unwrap() = "WebSocket".to_string();
+                        *self.state.lock().unwrap() = ConnectionState::Connected;
+                        return Ok(());
+                    }
+                }
+                "webtransport" if self.capabilities.webtransport_supported => {
+                    if self.try_webtransport_connection("https://localhost:8080").await.is_ok() {
+                        *self.selected_transport.lock().unwrap() = "WebTransport".to_string();
+                        *self.state.lock().unwrap() = ConnectionState::Connected;
+                        return Ok(());
+                    }
+                }
+                "sse" if self.capabilities.sse_supported => {
+                    if self.try_sse_connection("http://localhost:8080").await.is_ok() {
+                        *self.selected_transport.lock().unwrap() = "SSE".to_string();
+                        *self.state.lock().unwrap() = ConnectionState::Connected;
+                        return Ok(());
+                    }
+                }
+                _ => continue,
+            }
+        }
+        Err(TransportError::ConnectionFailed("All fallback protocols failed".to_string()))
     }
 }

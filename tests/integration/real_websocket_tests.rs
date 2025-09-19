@@ -378,7 +378,7 @@ async fn test_websocket_rpc_over_real_connection() {
         params: serde_json::json!({"message": "Hello, RPC!"}),
     };
 
-    let _result: Result<RpcResponse, RpcError> = client.call("echo", request, RpcMethod::Call).await;
+    let _result: Result<leptos_ws_pro::rpc::RpcResponse<RpcRequest>, RpcError> = client.call("echo", request, RpcMethod::Call).await;
     // This will likely fail with "not implemented" for now, but we'll implement it
     // assert!(result.is_ok(), "RPC call failed: {:?}", result);
 

@@ -1,5 +1,6 @@
 use leptos::prelude::*;
 use leptos::task::spawn_local;
+use leptos_ws_pro::*;
 
 use crate::messages::{Message, Messages};
 
@@ -15,8 +16,8 @@ pub fn MessageComp(message: Message) -> impl IntoView {
 #[component]
 pub fn App() -> impl IntoView {
     // Provide websocket connection
-    leptos_ws::provide_websocket("ws://localhost:3000/ws");
-    let messages = leptos_ws::ServerSignal::new("messages".to_string(), Messages::new()).unwrap();
+    provide_websocket("ws://localhost:3000/ws");
+    let messages = ServerSignal::new("messages".to_string(), Messages::new()).unwrap();
     let new_message = RwSignal::new("".to_string());
     view! {
         <div class="messages">
@@ -62,7 +63,7 @@ pub fn App() -> impl IntoView {
 
 #[server]
 async fn add_message(message: String) -> Result<(), ServerFnError> {
-    let messages = leptos_ws::ServerSignal::new("messages".to_string(), Messages::new()).unwrap();
+    let messages = ServerSignal::new("messages".to_string(), Messages::new()).unwrap();
     messages.update(move |x| {
         x.add_message(Message::new(message));
     });

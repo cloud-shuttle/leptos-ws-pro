@@ -1,0 +1,54 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://leptos-ws-pro.dev/schemas/transport-config.json",
+  "title": "Transport Configuration",
+  "description": "WebSocket transport configuration",
+  "type": "object",
+  "required": ["url"],
+  "properties": {
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "WebSocket server URL"
+    },
+    "protocol": {
+      "$ref": "#/definitions/TransportProtocol"
+    },
+    "codec": {
+      "$ref": "#/definitions/CodecType"
+    },
+    "heartbeat_interval": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 60000,
+      "default": 30000,
+      "description": "Heartbeat interval in milliseconds"
+    },
+    "reconnect_attempts": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10,
+      "default": 5,
+      "description": "Maximum reconnection attempts"
+    },
+    "reconnect_delay": {
+      "type": "integer",
+      "minimum": 1000,
+      "maximum": 30000,
+      "default": 5000,
+      "description": "Reconnection delay in milliseconds"
+    }
+  },
+  "definitions": {
+    "TransportProtocol": {
+      "type": "string",
+      "enum": ["websocket", "webtransport", "sse", "adaptive"],
+      "description": "Transport protocol to use"
+    },
+    "CodecType": {
+      "type": "string",
+      "enum": ["json", "rkyv", "hybrid", "compressed"],
+      "description": "Message codec to use"
+    }
+  }
+}

@@ -93,7 +93,8 @@ async fn test_webtransport_stream_multiplexing() {
     let connection = WebTransportConnection::new(config).await.unwrap();
 
     // Test stream creation (will fail without connection, but tests the API)
-    let result = connection.create_stream().await;
+    let stream_config = StreamConfig::default();
+    let result = connection.create_stream(stream_config).await;
     assert!(
         result.is_err(),
         "Expected stream creation to fail without connection: {:?}",

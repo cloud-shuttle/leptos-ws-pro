@@ -14,6 +14,10 @@ pub mod adaptive;
 pub mod sse;
 pub mod websocket;
 pub mod webtransport;
+pub mod optimized;
+
+// Re-export main types
+// Transport and TransportError are defined below in this module
 
 /// A unified message type that can be sent over any transport
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
@@ -36,6 +40,9 @@ pub enum MessageType {
 pub enum TransportError {
     #[error("Connection failed: {0}")]
     ConnectionFailed(String),
+
+    #[error("Connection closed")]
+    ConnectionClosed,
 
     #[error("Message send failed: {0}")]
     SendFailed(String),
@@ -103,6 +110,34 @@ impl TransportCapabilities {
             }
         }
     }
+
+    pub fn supports_webtransport(&self) -> bool {
+        self.webtransport
+    }
+
+    pub fn supports_websocket(&self) -> bool {
+        self.websocket
+    }
+
+    pub fn supports_sse(&self) -> bool {
+        self.sse
+    }
+
+    pub fn supports_streaming(&self) -> bool {
+        self.websocket || self.sse
+    }
+
+    pub fn supports_multiplexing(&self) -> bool {
+        self.webtransport
+    }
+
+    pub fn supports_server_sent_events(&self) -> bool {
+        self.sse
+    }
+
+    pub fn supports_automatic_reconnection(&self) -> bool {
+        self.websocket || self.sse
+    }
 }
 
 /// The core transport trait that all implementations must provide
@@ -127,6 +162,12 @@ pub trait Transport: Send + Sync + 'static {
     async fn send_message(&self, _message: &Message) -> Result<(), TransportError> {
         // Default implementation returns not supported
         Err(TransportError::NotSupported("send_message not implemented".to_string()))
+    }
+
+    /// Receive a message (default implementation for compatibility)
+    async fn receive_message(&self) -> Result<Message, TransportError> {
+        // Default implementation returns not supported
+        Err(TransportError::NotSupported("receive_message not implemented".to_string()))
     }
 
     /// Create a bidirectional stream (WebTransport specific)
@@ -232,6 +273,12 @@ impl TransportFactory {
 
     pub async fn create_sse(config: TransportConfig) -> Result<sse::SseConnection, TransportError> {
         sse::SseConnection::new(config).await
+    }
+}
+
+impl From<tokio::sync::mpsc::error::SendError<crate::transport::Message>> for TransportError {
+    fn from(_err: tokio::sync::mpsc::error::SendError<crate::transport::Message>) -> Self {
+        TransportError::ConnectionFailed("Channel send failed".to_string())
     }
 }
 

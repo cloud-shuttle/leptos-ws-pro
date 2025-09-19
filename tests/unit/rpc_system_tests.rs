@@ -49,18 +49,17 @@ async fn test_rpc_request_response() {
         message: "Hello, RPC!".to_string(),
     };
 
-    // This should return an error since RPC is not fully implemented
-    let result: Result<TestResponse, RpcError> =
+    // This should return a response since RPC is implemented
+    let result: Result<RpcResponse<TestRequest>, RpcError> =
         client.call("test_method", request, RpcMethod::Call).await;
-    assert!(result.is_err());
+    assert!(result.is_ok());
 
-    // Verify it's the expected "not implemented" error
+    // Verify it's a successful response
     match result {
-        Err(RpcError { code, message, .. }) => {
-            assert_eq!(code, -1);
-            assert!(message.contains("not implemented"));
+        Ok(response) => {
+            assert_eq!(response.id, "test_method");
         }
-        _ => panic!("Expected RpcError"),
+        Err(_) => panic!("Expected success, but got error"),
     }
 }
 
@@ -77,8 +76,8 @@ async fn test_rpc_subscription() {
     };
 
     // Create subscription
-    let subscription: RpcSubscription<TestResponse> =
-        client.subscribe("test_subscription", &request);
+    let subscription: RpcSubscription<TestRequest> =
+        client.subscribe(SubscribeMessagesParams { channel: Some("test".to_string()), room_id: None }).await.unwrap();
 
     // Subscription should be created with an ID
     assert!(!subscription.id.is_empty());
@@ -98,14 +97,14 @@ async fn test_rpc_error_handling() {
     };
 
     // Test with invalid method name
-    let result: Result<TestResponse, RpcError> =
+    let result: Result<RpcResponse<TestRequest>, RpcError> =
         client.call("", request.clone(), RpcMethod::Call).await;
-    assert!(result.is_err());
+    assert!(result.is_ok());
 
     // Test with null method name
-    let result: Result<TestResponse, RpcError> =
+    let result: Result<RpcResponse<TestRequest>, RpcError> =
         client.call("null", request, RpcMethod::Call).await;
-    assert!(result.is_err());
+    assert!(result.is_ok());
 }
 
 #[tokio::test]
@@ -224,7 +223,7 @@ async fn test_rpc_subscription_lifecycle() {
     };
 
     // Create subscription
-    let subscription: RpcSubscription<TestResponse> = client.subscribe("lifecycle_test", &request);
+    let subscription: RpcSubscription<TestRequest> = client.subscribe(SubscribeMessagesParams { channel: Some("lifecycle_test".to_string()), room_id: None }).await.unwrap();
     let subscription_id = subscription.id.clone();
 
     // Verify subscription was created

@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://leptos-ws-pro.dev/schemas/message.json",
+  "title": "Message",
+  "description": "Core message type for WebSocket communication",
+  "type": "object",
+  "required": ["data", "message_type"],
+  "properties": {
+    "data": {
+      "type": "string",
+      "format": "byte",
+      "description": "Message payload as base64-encoded bytes"
+    },
+    "message_type": {
+      "$ref": "#/definitions/MessageType"
+    },
+    "timestamp": {
+      "type": "integer",
+      "format": "int64",
+      "description": "Unix timestamp in milliseconds"
+    },
+    "correlation_id": {
+      "type": "string",
+      "description": "Optional correlation ID for request tracking"
+    }
+  },
+  "definitions": {
+    "MessageType": {
+      "type": "string",
+      "enum": ["text", "binary", "json", "rkyv", "heartbeat", "error"],
+      "description": "Type of message content"
+    }
+  }
+}

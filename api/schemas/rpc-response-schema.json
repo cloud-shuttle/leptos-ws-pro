@@ -1,0 +1,42 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://leptos-ws-pro.dev/schemas/rpc-response.json",
+  "title": "RPC Response",
+  "description": "Remote procedure call response",
+  "type": "object",
+  "required": ["id"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Request identifier matching the request",
+      "pattern": "^[a-zA-Z0-9_-]+$"
+    },
+    "result": {
+      "type": "object",
+      "description": "Method result (present on success)"
+    },
+    "error": {
+      "$ref": "#/definitions/RpcError"
+    }
+  },
+  "definitions": {
+    "RpcError": {
+      "type": "object",
+      "required": ["code", "message"],
+      "properties": {
+        "code": {
+          "type": "integer",
+          "description": "Error code"
+        },
+        "message": {
+          "type": "string",
+          "description": "Error message"
+        },
+        "data": {
+          "type": "object",
+          "description": "Additional error data"
+        }
+      }
+    }
+  }
+}

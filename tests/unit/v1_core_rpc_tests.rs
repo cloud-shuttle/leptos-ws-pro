@@ -150,45 +150,50 @@ mod rpc_core_tests {
         let message = ChatMessage {
             id: "msg_id".to_string(),
             content: "Hello, world!".to_string(),
-            sender: "user123".to_string(),
             timestamp: 1234567890, // Unix timestamp
-            room_id: "general".to_string(),
+            channel: Some("general".to_string()),
+            sender: Some("user123".to_string()),
+            room_id: Some("general".to_string()),
         };
 
         assert_eq!(message.content, "Hello, world!");
-        assert_eq!(message.sender, "user123");
-        assert_eq!(message.room_id, "general");
+        assert_eq!(message.sender, Some("user123".to_string()));
+        assert_eq!(message.room_id, Some("general".to_string()));
     }
 
     #[test]
     fn test_send_message_params() {
         let params = SendMessageParams {
-            content: "Test message".to_string(),
-            room_id: "test_room".to_string(),
+            message: "Test message".to_string(),
+            channel: Some("test_channel".to_string()),
+            content: Some("Test message".to_string()),
+            room_id: Some("test_room".to_string()),
         };
 
-        assert_eq!(params.content, "Test message");
-        assert_eq!(params.room_id, "test_room");
+        assert_eq!(params.content, Some("Test message".to_string()));
+        assert_eq!(params.room_id, Some("test_room".to_string()));
     }
 
     #[test]
     fn test_get_messages_params() {
         let params = GetMessagesParams {
-            room_id: "general".to_string(),
-            limit: 50,
+            channel: Some("general".to_string()),
+            limit: Some(50),
+            room_id: Some("general".to_string()),
         };
 
-        assert_eq!(params.room_id, "general");
-        assert_eq!(params.limit, 50);
+        assert_eq!(params.room_id, Some("general".to_string()));
+        assert_eq!(params.limit, Some(50));
     }
 
     #[test]
     fn test_subscribe_messages_params() {
         let params = SubscribeMessagesParams {
-            room_id: "general".to_string(),
+            channel: Some("general".to_string()),
+            room_id: Some("general".to_string()),
         };
 
-        assert_eq!(params.room_id, "general");
+        assert_eq!(params.room_id, Some("general".to_string()));
     }
 
     #[test]
@@ -233,9 +238,10 @@ mod rpc_core_tests {
         let message = ChatMessage {
             id: "serialization_msg_id".to_string(),
             content: "Serialization test".to_string(),
-            sender: "test_user".to_string(),
             timestamp: 1234567890,
-            room_id: "test_room".to_string(),
+            channel: Some("test_channel".to_string()),
+            sender: Some("test_user".to_string()),
+            room_id: Some("test_room".to_string()),
         };
 
         let json = serde_json::to_string(&message).unwrap();
@@ -245,7 +251,7 @@ mod rpc_core_tests {
 
         let deserialized: ChatMessage = serde_json::from_str(&json).unwrap();
         assert_eq!(deserialized.content, "Serialization test");
-        assert_eq!(deserialized.sender, "test_user");
+        assert_eq!(deserialized.sender, Some("test_user".to_string()));
     }
 
     #[test]

@@ -1,4 +1,4 @@
-use leptos_ws::transport::{TransportConfig, TransportFactory};
+use leptos_ws_pro::transport::{TransportConfig, TransportCapabilities};
 
 #[tokio::test]
 async fn test_transport_config_creation() {
@@ -13,7 +13,7 @@ async fn test_transport_config_creation() {
 
 #[test]
 fn test_transport_capabilities_detection() {
-    let caps = leptos_ws::transport::TransportCapabilities::detect();
+    let caps = TransportCapabilities::detect();
 
     #[cfg(target_arch = "wasm32")]
     {

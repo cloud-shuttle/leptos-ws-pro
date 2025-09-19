@@ -121,7 +121,7 @@ async fn test_message_retry_mechanism() {
     };
 
     // Send message (should succeed)
-    let result: Result<TestMessage, leptos_ws_pro::rpc::RpcError> = client
+    let result: Result<leptos_ws_pro::rpc::RpcResponse<TestMessage>, leptos_ws_pro::rpc::RpcError> = client
         .call("test_method", message, leptos_ws_pro::rpc::RpcMethod::Call)
         .await;
     // This will fail with "not implemented" error, but that's expected for now

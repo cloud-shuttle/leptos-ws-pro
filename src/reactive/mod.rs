@@ -489,6 +489,15 @@ pub struct PresenceMap {
     pub last_updated: Instant,
 }
 
+impl Default for PresenceMap {
+    fn default() -> Self {
+        Self {
+            users: HashMap::new(),
+            last_updated: Instant::now(),
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct UserPresence {
     pub user_id: String,

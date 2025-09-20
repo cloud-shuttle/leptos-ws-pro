@@ -1047,7 +1047,6 @@ struct PerformanceAlert {
     async fn set_ttl(&mut self, ttl: Duration) {
         self.ttl = ttl;
     }
-}
 
 // Remove duplicate MessageCache definition - using imported one
 

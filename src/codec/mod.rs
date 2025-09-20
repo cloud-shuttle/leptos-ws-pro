@@ -75,7 +75,7 @@ impl RkyvCodec {
     }
 }
 
-// Simplified rkyv implementation that works with the current rkyv version
+// Rkyv implementation with JSON fallback for compatibility
 impl<T> Codec<T> for RkyvCodec
 where
     T: SerdeSerialize + for<'de> SerdeDeserialize<'de> + Clone + Send + Sync,

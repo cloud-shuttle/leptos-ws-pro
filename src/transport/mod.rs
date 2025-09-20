@@ -20,13 +20,13 @@ pub mod optimized;
 // Transport and TransportError are defined below in this module
 
 /// A unified message type that can be sent over any transport
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)]
 pub struct Message {
     pub data: Vec<u8>,
     pub message_type: MessageType,
 }
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)]
 pub enum MessageType {
     Text,
     Binary,

@@ -8,6 +8,7 @@ use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
 use tokio::net::TcpStream;
+use tokio::sync::mpsc;
 use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
 
 /// WebSocket connection implementation
@@ -16,14 +17,25 @@ pub struct WebSocketConnection {
     config: TransportConfig,
     state: Arc<Mutex<ConnectionState>>,
     stream: Option<WebSocketStream<MaybeTlsStream<TcpStream>>>,
+    message_sender: Option<mpsc::UnboundedSender<Message>>,
+    message_receiver: Option<mpsc::UnboundedReceiver<Message>>,
+    connection_task: Option<tokio::task::JoinHandle<()>>,
+    // Send channel for outgoing messages
+    send_channel: Option<mpsc::UnboundedSender<Message>>,
 }
 
 impl WebSocketConnection {
     pub async fn new(config: TransportConfig) -> Result<Self, TransportError> {
+        let (message_sender, message_receiver) = mpsc::unbounded_channel();
+
         Ok(Self {
             config,
             state: Arc::new(Mutex::new(ConnectionState::Disconnected)),
             stream: None,
+            message_sender: Some(message_sender),
+            message_receiver: Some(message_receiver),
+            connection_task: None,
+            send_channel: None,
         })
     }
 
@@ -39,6 +51,98 @@ impl WebSocketConnection {
 
     pub fn state(&self) -> ConnectionState {
         *self.state.lock().unwrap()
+    }
+
+    /// Start background task for handling WebSocket messages
+    async fn start_message_handling_task(&mut self) -> Result<(), TransportError> {
+        let stream = self.stream.take().ok_or_else(|| {
+            TransportError::ConnectionFailed("No WebSocket stream available".to_string())
+        })?;
+
+        let message_sender = self.message_sender.take().ok_or_else(|| {
+            TransportError::ConnectionFailed("No message sender available".to_string())
+        })?;
+
+        let (send_sender, mut send_receiver) = mpsc::unbounded_channel::<Message>();
+        self.send_channel = Some(send_sender);
+
+        let state = Arc::clone(&self.state);
+
+        let task = tokio::spawn(async move {
+            let (mut write, mut read) = stream.split();
+
+            // Spawn task for handling outgoing messages
+            tokio::spawn(async move {
+                while let Some(message) = send_receiver.recv().await {
+                    let ws_msg = match message.message_type {
+                        MessageType::Text => {
+                            let text = String::from_utf8_lossy(&message.data);
+                            tokio_tungstenite::tungstenite::Message::Text(text.to_string().into())
+                        }
+                        MessageType::Binary => {
+                            tokio_tungstenite::tungstenite::Message::Binary(message.data.into())
+                        }
+                        MessageType::Ping => {
+                            tokio_tungstenite::tungstenite::Message::Ping(message.data.into())
+                        }
+                        MessageType::Pong => {
+                            tokio_tungstenite::tungstenite::Message::Pong(message.data.into())
+                        }
+                        MessageType::Close => {
+                            tokio_tungstenite::tungstenite::Message::Close(None)
+                        }
+                    };
+
+                    if let Err(e) = write.send(ws_msg).await {
+                        eprintln!("Failed to send WebSocket message: {}", e);
+                        break;
+                    }
+                }
+            });
+
+            // Handle incoming messages
+            while let Some(msg) = read.next().await {
+                match msg {
+                    Ok(ws_msg) => {
+                        let message = match ws_msg {
+                            tokio_tungstenite::tungstenite::Message::Text(text) => Message {
+                                data: text.as_bytes().to_vec(),
+                                message_type: MessageType::Text,
+                            },
+                            tokio_tungstenite::tungstenite::Message::Binary(data) => Message {
+                                data: data.to_vec(),
+                                message_type: MessageType::Binary,
+                            },
+                            tokio_tungstenite::tungstenite::Message::Ping(data) => Message {
+                                data: data.to_vec(),
+                                message_type: MessageType::Ping,
+                            },
+                            tokio_tungstenite::tungstenite::Message::Pong(data) => Message {
+                                data: data.to_vec(),
+                                message_type: MessageType::Pong,
+                            },
+                            tokio_tungstenite::tungstenite::Message::Close(_) => {
+                                *state.lock().unwrap() = ConnectionState::Disconnected;
+                                break;
+                            }
+                            tokio_tungstenite::tungstenite::Message::Frame(_) => continue,
+                        };
+
+                        if message_sender.send(message).is_err() {
+                            break;
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("WebSocket error: {}", e);
+                        *state.lock().unwrap() = ConnectionState::Failed;
+                        break;
+                    }
+                }
+            }
+        });
+
+        self.connection_task = Some(task);
+        Ok(())
     }
 }
 
@@ -57,6 +161,10 @@ impl Transport for WebSocketConnection {
             Ok((ws_stream, _)) => {
                 self.stream = Some(ws_stream);
                 *self.state.lock().unwrap() = ConnectionState::Connected;
+
+                // Start background task for handling messages
+                self.start_message_handling_task().await?;
+
                 Ok(())
             }
             Err(e) => {
@@ -67,6 +175,11 @@ impl Transport for WebSocketConnection {
     }
 
     async fn disconnect(&mut self) -> Result<(), TransportError> {
+        // Cancel the connection task
+        if let Some(task) = self.connection_task.take() {
+            task.abort();
+        }
+
         if let Some(stream) = &mut self.stream {
             // Close the WebSocket connection
             let _ = stream.close(None).await;
@@ -193,39 +306,24 @@ impl Transport for WebSocketConnection {
     }
 
     async fn send_message(&self, message: &Message) -> Result<(), TransportError> {
-        if let Some(stream) = &self.stream {
-            let ws_msg = match message.message_type {
-                MessageType::Text => {
-                    let text = String::from_utf8(message.data.clone())
-                        .map_err(|e| TransportError::SendFailed(e.to_string()))?;
-                    tokio_tungstenite::tungstenite::Message::Text(text.into())
-                }
-                MessageType::Binary => {
-                    tokio_tungstenite::tungstenite::Message::Binary(message.data.clone().into())
-                }
-                MessageType::Ping => {
-                    tokio_tungstenite::tungstenite::Message::Ping(message.data.clone().into())
-                }
-                MessageType::Pong => {
-                    tokio_tungstenite::tungstenite::Message::Pong(message.data.clone().into())
-                }
-                MessageType::Close => {
-                    tokio_tungstenite::tungstenite::Message::Close(None)
-                }
-            };
+        if self.state() != ConnectionState::Connected {
+            return Err(TransportError::ConnectionFailed("Not connected".to_string()));
+        }
 
-            // We need to use a different approach since we can't borrow mutably
-            // For now, return an error indicating this needs to be implemented differently
-            Err(TransportError::NotSupported("send_message requires mutable access to stream".to_string()))
+        // Send via the send channel to background task
+        if let Some(sender) = &self.send_channel {
+            sender.send(message.clone())
+                .map_err(|_| TransportError::SendFailed("Failed to send message to background task".to_string()))
         } else {
-            Err(TransportError::ConnectionFailed("Not connected".to_string()))
+            Err(TransportError::SendFailed("No send channel available".to_string()))
         }
     }
 
     async fn receive_message(&self) -> Result<Message, TransportError> {
-        // We need to use a different approach since we can't borrow mutably
-        // For now, return an error indicating this needs to be implemented differently
-        Err(TransportError::NotSupported("receive_message requires mutable access to stream".to_string()))
+        // The receive_message method can't borrow mutably from &self
+        // This is a limitation of the current Transport trait design
+        // Users should use the split() method to get a stream for receiving messages
+        Err(TransportError::NotSupported("Use split() to get a stream for receiving messages".to_string()))
     }
 
     async fn create_bidirectional_stream(&mut self) -> Result<(), TransportError> {
@@ -262,6 +360,10 @@ mod tests {
             config,
             state: Arc::new(Mutex::new(ConnectionState::Disconnected)),
             stream: None,
+            message_sender: None,
+            message_receiver: None,
+            connection_task: None,
+            send_channel: None,
         };
 
         let caps = connection.capabilities();

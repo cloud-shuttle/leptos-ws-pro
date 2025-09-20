@@ -1,7 +1,7 @@
 use leptos_ws_pro::{
-    transport::webtransport::WebTransportConnection,
+    transport::webtransport::{WebTransportConnection, config::StreamConfig},
     transport::{
-        ConnectionState, Transport, TransportCapabilities, TransportConfig, TransportError,
+        ConnectionState, Transport, TransportCapabilities, TransportConfig, TransportError, Message, MessageType,
     },
 };
 use serde::{Deserialize, Serialize};
@@ -172,7 +172,11 @@ async fn test_webtransport_message_sending() {
     };
 
     // Test sending message without connection
-    let result = connection.send_message(&test_msg).await;
+    let message = Message {
+        data: serde_json::to_vec(&test_msg).unwrap(),
+        message_type: MessageType::Text,
+    };
+    let result = connection.send_message(&message).await;
     assert!(
         result.is_err(),
         "Expected send to fail without connection: {:?}",
@@ -265,7 +269,7 @@ async fn test_webtransport_performance_optimization() {
     let connection = WebTransportConnection::new(config).await.unwrap();
 
     // Test performance metrics
-    let metrics = connection.get_performance_metrics();
+    let metrics = connection.get_performance_metrics().await;
     assert_eq!(metrics.connection_count, 0);
     assert_eq!(metrics.message_count, 0);
     assert_eq!(metrics.error_count, 0);

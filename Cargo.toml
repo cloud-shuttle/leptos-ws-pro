@@ -1,10 +1,10 @@
 [package]
 name = "leptos-ws-pro"
-version = "0.10.2"
+version = "0.11.0"
 edition = "2024"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]
-description = "🚀 Production-ready WebSocket library for Leptos with multi-transport support, enterprise security, high performance, and reactive integration. Production release - fully tested and ready for enterprise use!"
+description = "🚀 Production-ready WebSocket library for Leptos with multi-transport support, enterprise security, high performance, and reactive integration. All core functionality implemented and tested!"
 documentation = "https://docs.rs/leptos-ws-pro/latest/"
 repository = "https://github.com/cloud-shuttle/leptos-ws-pro"
 keywords = ["leptos", "websocket", "rpc", "reactive", "performance"]

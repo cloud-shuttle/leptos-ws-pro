@@ -1,7 +1,7 @@
-use crate::transport::{ConnectionState, Message, Transport, TransportConfig, TransportError};
-use crate::transport::websocket::WebSocketConnection;
 use crate::transport::sse::SseConnection;
+use crate::transport::websocket::WebSocketConnection;
 use crate::transport::webtransport::WebTransportConnection;
+use crate::transport::{ConnectionState, Message, Transport, TransportConfig, TransportError};
 use async_trait::async_trait;
 use futures::{Sink, SinkExt, Stream};
 use std::pin::Pin;
@@ -21,7 +21,7 @@ impl TransportCapabilities {
         Self {
             websocket_supported: true, // WebSocket is always supported in our implementation
             webtransport_supported: true, // WebTransport is now implemented
-            sse_supported: true, // SSE is now implemented
+            sse_supported: true,       // SSE is now implemented
         }
     }
 
@@ -158,7 +158,9 @@ impl AdaptiveTransport {
             }
         }
 
-        Err(TransportError::ConnectionFailed("All transport methods failed".to_string()))
+        Err(TransportError::ConnectionFailed(
+            "All transport methods failed".to_string(),
+        ))
     }
 
     async fn try_websocket_connection(&mut self, url: &str) -> Result<(), TransportError> {
@@ -255,24 +257,39 @@ impl Transport for AdaptiveTransport {
 
 impl AdaptiveTransport {
     /// Negotiate the best protocol from a list of supported protocols
-    pub async fn negotiate_protocol(&mut self, supported_protocols: Vec<String>) -> Result<(), TransportError> {
+    pub async fn negotiate_protocol(
+        &mut self,
+        supported_protocols: Vec<String>,
+    ) -> Result<(), TransportError> {
         // Try protocols in order of preference
         for protocol in supported_protocols {
             match protocol.as_str() {
                 "websocket" if self.capabilities.websocket_supported => {
-                    if self.try_websocket_connection("ws://localhost:8080").await.is_ok() {
+                    if self
+                        .try_websocket_connection("ws://localhost:8080")
+                        .await
+                        .is_ok()
+                    {
                         *self.selected_transport.lock().unwrap() = "WebSocket".to_string();
                         return Ok(());
                     }
                 }
                 "webtransport" if self.capabilities.webtransport_supported => {
-                    if self.try_webtransport_connection("https://localhost:8080").await.is_ok() {
+                    if self
+                        .try_webtransport_connection("https://localhost:8080")
+                        .await
+                        .is_ok()
+                    {
                         *self.selected_transport.lock().unwrap() = "WebTransport".to_string();
                         return Ok(());
                     }
                 }
                 "sse" if self.capabilities.sse_supported => {
-                    if self.try_sse_connection("http://localhost:8080").await.is_ok() {
+                    if self
+                        .try_sse_connection("http://localhost:8080")
+                        .await
+                        .is_ok()
+                    {
                         *self.selected_transport.lock().unwrap() = "SSE".to_string();
                         return Ok(());
                     }
@@ -280,7 +297,9 @@ impl AdaptiveTransport {
                 _ => continue,
             }
         }
-        Err(TransportError::ConnectionFailed("No supported protocol available".to_string()))
+        Err(TransportError::ConnectionFailed(
+            "No supported protocol available".to_string(),
+        ))
     }
 
     /// Check if WebTransport is available
@@ -316,27 +335,42 @@ impl AdaptiveTransport {
     }
 
     /// Fallback to the next available protocol
-    pub async fn fallback_to_next_protocol(&mut self, fallback_protocols: Vec<String>) -> Result<(), TransportError> {
+    pub async fn fallback_to_next_protocol(
+        &mut self,
+        fallback_protocols: Vec<String>,
+    ) -> Result<(), TransportError> {
         *self.state.lock().unwrap() = ConnectionState::Reconnecting;
 
         for protocol in fallback_protocols {
             match protocol.as_str() {
                 "websocket" if self.capabilities.websocket_supported => {
-                    if self.try_websocket_connection("ws://localhost:8080").await.is_ok() {
+                    if self
+                        .try_websocket_connection("ws://localhost:8080")
+                        .await
+                        .is_ok()
+                    {
                         *self.selected_transport.lock().unwrap() = "WebSocket".to_string();
                         *self.state.lock().unwrap() = ConnectionState::Connected;
                         return Ok(());
                     }
                 }
                 "webtransport" if self.capabilities.webtransport_supported => {
-                    if self.try_webtransport_connection("https://localhost:8080").await.is_ok() {
+                    if self
+                        .try_webtransport_connection("https://localhost:8080")
+                        .await
+                        .is_ok()
+                    {
                         *self.selected_transport.lock().unwrap() = "WebTransport".to_string();
                         *self.state.lock().unwrap() = ConnectionState::Connected;
                         return Ok(());
                     }
                 }
                 "sse" if self.capabilities.sse_supported => {
-                    if self.try_sse_connection("http://localhost:8080").await.is_ok() {
+                    if self
+                        .try_sse_connection("http://localhost:8080")
+                        .await
+                        .is_ok()
+                    {
                         *self.selected_transport.lock().unwrap() = "SSE".to_string();
                         *self.state.lock().unwrap() = ConnectionState::Connected;
                         return Ok(());
@@ -345,6 +379,8 @@ impl AdaptiveTransport {
                 _ => continue,
             }
         }
-        Err(TransportError::ConnectionFailed("All fallback protocols failed".to_string()))
+        Err(TransportError::ConnectionFailed(
+            "All fallback protocols failed".to_string(),
+        ))
     }
 }

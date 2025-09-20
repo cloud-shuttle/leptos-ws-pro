@@ -6,21 +6,22 @@
 //! - Transport protocol negotiation and fallback
 //! - Advanced connection pooling and load balancing
 
-use leptos_ws_pro::transport::{
-    ConnectionState, TransportCapabilities, TransportConfig, TransportError
+use leptos_ws_pro::transport::adaptive::AdaptiveTransport;
+use leptos_ws_pro::transport::sse::{
+    HeartbeatConfig, HeartbeatEvent, ReconnectionStrategy, SseConnection, SseEvent,
 };
 use leptos_ws_pro::transport::websocket::WebSocketConnection;
-use leptos_ws_pro::transport::sse::{
-    SseConnection, SseEvent, ReconnectionStrategy, HeartbeatConfig, HeartbeatEvent
-};
 use leptos_ws_pro::transport::webtransport::{
-    WebTransportConnection, AdvancedWebTransportStream, StreamConfig, ReliabilityMode, OrderingMode, CongestionControl
+    AdvancedWebTransportStream, CongestionControl, OrderingMode, ReliabilityMode, StreamConfig,
+    WebTransportConnection,
 };
-use leptos_ws_pro::transport::adaptive::AdaptiveTransport;
+use leptos_ws_pro::transport::{
+    ConnectionState, TransportCapabilities, TransportConfig, TransportError,
+};
 // use leptos_ws_pro::codec::{Codec, JsonCodec, HybridCodec};
 use serde::{Deserialize, Serialize};
-use std::time::Duration;
 use std::collections::HashMap;
+use std::time::Duration;
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct AdvancedTestData {
@@ -80,7 +81,11 @@ mod advanced_webtransport_tests {
         // Then: Should create streams successfully
         for stream_config in stream_configs {
             let result = client.create_stream(stream_config.clone()).await;
-            assert!(result.is_ok(), "Failed to create stream: {:?}", stream_config);
+            assert!(
+                result.is_ok(),
+                "Failed to create stream: {:?}",
+                stream_config
+            );
 
             let stream = result.unwrap();
             assert_eq!(stream.stream_id(), stream_config.stream_id);
@@ -171,7 +176,9 @@ mod advanced_webtransport_tests {
         let reliability_modes = vec![
             ReliabilityMode::BestEffort,
             ReliabilityMode::Reliable,
-            ReliabilityMode::PartiallyReliable { max_retransmissions: 3 },
+            ReliabilityMode::PartiallyReliable {
+                max_retransmissions: 3,
+            },
         ];
 
         for (i, reliability) in reliability_modes.into_iter().enumerate() {
@@ -194,24 +201,30 @@ mod advanced_webtransport_tests {
             };
 
             let send_result = stream.send_data(&data).await;
-            assert!(send_result.is_ok(), "Failed to send data with reliability: {:?}", reliability);
+            assert!(
+                send_result.is_ok(),
+                "Failed to send data with reliability: {:?}",
+                reliability
+            );
 
             // Verify reliability behavior
             match reliability {
                 ReliabilityMode::BestEffort => {
                     // Best effort should complete quickly but may lose data
                     assert!(stream.send_latency().await < Duration::from_millis(100));
-                },
+                }
                 ReliabilityMode::Reliable => {
                     // Reliable should guarantee delivery
                     assert!(stream.is_delivery_guaranteed());
                     assert!(stream.acknowledgment_received().await);
-                },
-                ReliabilityMode::PartiallyReliable { max_retransmissions } => {
+                }
+                ReliabilityMode::PartiallyReliable {
+                    max_retransmissions,
+                } => {
                     // Partially reliable should retry up to max_retransmissions
                     assert_eq!(stream.max_retransmissions(), max_retransmissions);
                     assert!(stream.retransmission_count().await <= max_retransmissions);
-                },
+                }
             }
         }
     }
@@ -259,9 +272,7 @@ mod advanced_webtransport_tests {
                     stream_id: Some(i as u32),
                 };
 
-                let task = tokio::spawn(async move {
-                    stream.send_data(&data).await
-                });
+                let task = tokio::spawn(async move { stream.send_data(&data).await });
                 send_tasks.push(task);
             }
 
@@ -279,23 +290,23 @@ mod advanced_webtransport_tests {
                     // Conservative should be slower but more reliable
                     assert!(success_count >= burst_size * 80 / 100); // At least 80% success
                     assert!(stream.average_send_rate().await < 1000.0); // Slower rate
-                },
+                }
                 CongestionControl::Aggressive => {
                     // Aggressive should be faster but may have more failures
                     assert!(success_count >= burst_size * 60 / 100); // At least 60% success
                     assert!(stream.average_send_rate().await > 500.0); // Higher rate
-                },
+                }
                 CongestionControl::Adaptive => {
                     // Adaptive should balance speed and reliability
                     assert!(success_count >= burst_size * 70 / 100); // At least 70% success
                     let rate = stream.average_send_rate().await;
                     assert!(rate > 200.0 && rate < 1500.0); // Balanced rate
-                },
+                }
                 CongestionControl::Default => {
                     // Default should work like Conservative
                     assert!(success_count >= burst_size * 80 / 100); // At least 80% success
                     assert!(stream.average_send_rate().await < 1000.0); // Slower rate
-                },
+                }
             }
         }
     }
@@ -334,7 +345,11 @@ mod advanced_sse_tests {
 
         for event_type in event_types {
             let result = client.subscribe_to_event_type(event_type.to_string()).await;
-            assert!(result.is_ok(), "Failed to subscribe to event type: {}", event_type);
+            assert!(
+                result.is_ok(),
+                "Failed to subscribe to event type: {}",
+                event_type
+            );
 
             // Simulate receiving event
             let event_data = AdvancedTestData {
@@ -346,7 +361,11 @@ mod advanced_sse_tests {
             };
 
             let event_result = client.receive_event(event_type).await;
-            assert!(event_result.is_ok(), "Failed to receive event type: {}", event_type);
+            assert!(
+                event_result.is_ok(),
+                "Failed to receive event type: {}",
+                event_type
+            );
 
             received_events.push((event_type.to_string(), event_data));
         }
@@ -396,7 +415,11 @@ mod advanced_sse_tests {
                 _ => ReconnectionStrategy::None,
             };
             let result = client.set_reconnection_strategy(strategy).await;
-            assert!(result.is_ok(), "Failed to set reconnection strategy: {}", strategy_name);
+            assert!(
+                result.is_ok(),
+                "Failed to set reconnection strategy: {}",
+                strategy_name
+            );
 
             // Simulate connection loss
             client.simulate_connection_loss().await;
@@ -407,24 +430,28 @@ mod advanced_sse_tests {
             let reconnect_result = client.reconnect().await;
             let elapsed = start_time.elapsed();
 
-            assert!(reconnect_result.is_ok(), "Failed to reconnect with strategy: {}", strategy_name);
+            assert!(
+                reconnect_result.is_ok(),
+                "Failed to reconnect with strategy: {}",
+                strategy_name
+            );
 
             // Verify strategy behavior
             match strategy_name {
                 "immediate" => {
                     assert!(elapsed < Duration::from_millis(50));
-                },
+                }
                 "exponential_backoff" => {
                     assert!(elapsed >= initial_delay);
                     assert!(elapsed < initial_delay * 2);
-                },
+                }
                 "linear_backoff" => {
                     assert!(elapsed >= initial_delay);
                     assert!(elapsed < initial_delay + Duration::from_millis(100));
-                },
+                }
                 "custom" => {
                     assert!(elapsed >= initial_delay);
-                },
+                }
                 _ => {}
             }
         }
@@ -445,13 +472,13 @@ mod advanced_sse_tests {
 
         // When: Enabling heartbeat mechanism
         let heartbeat_interval = Duration::from_millis(100);
-            let heartbeat_config = HeartbeatConfig {
-                enabled: true,
-                interval: heartbeat_interval,
-                timeout: Duration::from_secs(60),
-                event_type: "heartbeat".to_string(),
-            };
-            let result = client.enable_heartbeat(heartbeat_config).await;
+        let heartbeat_config = HeartbeatConfig {
+            enabled: true,
+            interval: heartbeat_interval,
+            timeout: Duration::from_secs(60),
+            event_type: "heartbeat".to_string(),
+        };
+        let result = client.enable_heartbeat(heartbeat_config).await;
         assert!(result.is_ok(), "Failed to enable heartbeat");
 
         // Then: Should receive heartbeat events
@@ -467,8 +494,16 @@ mod advanced_sse_tests {
         }
 
         // Should have received multiple heartbeats
-        assert!(heartbeat_count >= 3, "Expected at least 3 heartbeats, got {}", heartbeat_count);
-        assert!(heartbeat_count <= 7, "Expected at most 7 heartbeats, got {}", heartbeat_count);
+        assert!(
+            heartbeat_count >= 3,
+            "Expected at least 3 heartbeats, got {}",
+            heartbeat_count
+        );
+        assert!(
+            heartbeat_count <= 7,
+            "Expected at most 7 heartbeats, got {}",
+            heartbeat_count
+        );
     }
 }
 
@@ -493,13 +528,11 @@ mod transport_negotiation_tests {
         let mut transport = AdaptiveTransport::new(config).await.unwrap();
 
         // When: Negotiating protocol with server
-        let supported_protocols = vec![
-            "webtransport",
-            "websocket",
-            "sse",
-        ];
+        let supported_protocols = vec!["webtransport", "websocket", "sse"];
 
-        let result = transport.negotiate_protocol(supported_protocols.clone()).await;
+        let result = transport
+            .negotiate_protocol(supported_protocols.clone())
+            .await;
         assert!(result.is_ok(), "Failed to negotiate protocol");
 
         let selected_protocol = result.unwrap();
@@ -510,15 +543,15 @@ mod transport_negotiation_tests {
             "webtransport" => {
                 assert!(transport.is_webtransport_available());
                 assert!(transport.current_protocol().await == "webtransport");
-            },
+            }
             "websocket" => {
                 assert!(transport.is_websocket_available());
                 assert!(transport.current_protocol().await == "websocket");
-            },
+            }
             "sse" => {
                 assert!(transport.is_sse_available());
                 assert!(transport.current_protocol().await == "sse");
-            },
+            }
             _ => panic!("Unexpected protocol selected: {}", selected_protocol),
         }
     }
@@ -544,8 +577,13 @@ mod transport_negotiation_tests {
         transport.simulate_protocol_failure(primary_protocol).await;
 
         // Then: Should fallback to next available protocol
-        let fallback_result = transport.fallback_to_next_protocol(fallback_protocols.clone()).await;
-        assert!(fallback_result.is_ok(), "Failed to fallback to next protocol");
+        let fallback_result = transport
+            .fallback_to_next_protocol(fallback_protocols.clone())
+            .await;
+        assert!(
+            fallback_result.is_ok(),
+            "Failed to fallback to next protocol"
+        );
 
         let fallback_protocol = fallback_result.unwrap();
         assert!(fallback_protocols.contains(&fallback_protocol.as_str()));
@@ -636,7 +674,11 @@ mod advanced_connection_pooling_tests {
         for i in 0..num_requests {
             let task = tokio::spawn(async move {
                 let connection = pool.get_connection().await;
-                assert!(connection.is_ok(), "Failed to get connection for request {}", i);
+                assert!(
+                    connection.is_ok(),
+                    "Failed to get connection for request {}",
+                    i
+                );
 
                 let connection = connection.unwrap();
                 let connection_id = connection.id;
@@ -661,8 +703,14 @@ mod advanced_connection_pooling_tests {
 
         // Then: Should distribute load across connections
         let unique_connections: std::collections::HashSet<_> = connection_ids.into_iter().collect();
-        assert!(unique_connections.len() > 1, "Load should be distributed across multiple connections");
-        assert!(unique_connections.len() <= 5, "Should not exceed max connections");
+        assert!(
+            unique_connections.len() > 1,
+            "Load should be distributed across multiple connections"
+        );
+        assert!(
+            unique_connections.len() <= 5,
+            "Should not exceed max connections"
+        );
     }
 
     #[tokio::test]

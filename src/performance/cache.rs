@@ -45,16 +45,20 @@ impl MessageCache {
             self.evict_oldest(&mut cache);
         }
 
-        cache.insert(key, CacheEntry {
-            value,
-            created_at: Instant::now(),
-            expires_at: Instant::now() + self.ttl,
-            access_count: 1,
-        });
+        cache.insert(
+            key,
+            CacheEntry {
+                value,
+                created_at: Instant::now(),
+                expires_at: Instant::now() + self.ttl,
+                access_count: 1,
+            },
+        );
     }
 
     fn evict_oldest(&self, cache: &mut HashMap<String, CacheEntry>) {
-        if let Some(oldest_key) = cache.iter()
+        if let Some(oldest_key) = cache
+            .iter()
             .min_by_key(|(_, entry)| entry.created_at)
             .map(|(key, _)| key.clone())
         {

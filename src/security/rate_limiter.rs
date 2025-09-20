@@ -2,9 +2,9 @@
 //!
 //! Token bucket rate limiting implementation
 
+use crate::security::manager::SecurityError;
 use std::collections::HashMap;
 use std::time::{Duration, Instant};
-use crate::security::manager::SecurityError;
 
 /// Rate limiter using token bucket algorithm
 pub struct RateLimiter {
@@ -23,9 +23,10 @@ impl RateLimiter {
     }
 
     pub fn check_request(&mut self, client_id: &str) -> Result<(), SecurityError> {
-        let bucket = self.buckets.entry(client_id.to_string()).or_insert_with(|| {
-            TokenBucket::new(self.requests_per_minute, self.burst_capacity)
-        });
+        let bucket = self
+            .buckets
+            .entry(client_id.to_string())
+            .or_insert_with(|| TokenBucket::new(self.requests_per_minute, self.burst_capacity));
 
         if bucket.consume() {
             Ok(())

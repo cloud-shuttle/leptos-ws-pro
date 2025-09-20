@@ -206,11 +206,21 @@ async fn test_rpc_error_codes() {
     let internal_error = RpcError::InternalError("Internal server error".to_string());
 
     // Test error serialization
-    assert!(serde_json::to_string(&connection_error).unwrap().contains("ConnectionFailed"));
-    assert!(serde_json::to_string(&timeout_error).unwrap().contains("Timeout"));
-    assert!(serde_json::to_string(&method_error).unwrap().contains("MethodNotFound"));
-    assert!(serde_json::to_string(&params_error).unwrap().contains("InvalidParams"));
-    assert!(serde_json::to_string(&internal_error).unwrap().contains("InternalError"));
+    assert!(serde_json::to_string(&connection_error)
+        .unwrap()
+        .contains("ConnectionFailed"));
+    assert!(serde_json::to_string(&timeout_error)
+        .unwrap()
+        .contains("Timeout"));
+    assert!(serde_json::to_string(&method_error)
+        .unwrap()
+        .contains("MethodNotFound"));
+    assert!(serde_json::to_string(&params_error)
+        .unwrap()
+        .contains("InvalidParams"));
+    assert!(serde_json::to_string(&internal_error)
+        .unwrap()
+        .contains("InternalError"));
 }
 
 #[cfg(feature = "advanced-rpc")]
@@ -325,7 +335,8 @@ async fn test_rpc_batch_processing() {
     ];
 
     let batch_response_json = serde_json::to_string(&batch_responses).unwrap();
-    let deserialized_responses: Vec<RpcResponse> = serde_json::from_str(&batch_response_json).unwrap();
+    let deserialized_responses: Vec<RpcResponse> =
+        serde_json::from_str(&batch_response_json).unwrap();
 
     assert_eq!(deserialized_responses.len(), 2);
     assert_eq!(deserialized_responses[0].id, "batch-1");

@@ -15,8 +15,8 @@ use guards::{Plain, ReadGuard};
 use leptos::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use tokio::sync::broadcast::{channel, Receiver, Sender};
 use tokio::sync::RwLock;
-use tokio::sync::broadcast::{Receiver, Sender, channel};
 
 use super::traits::ServerSignalTrait;
 
@@ -68,11 +68,8 @@ where
         let current_json = block_on(self.json_value.read()).clone();
 
         if current_json != new_json {
-            let update = ServerSignalUpdate::new_from_json(
-                self.name.clone(),
-                &current_json,
-                &new_json,
-            );
+            let update =
+                ServerSignalUpdate::new_from_json(self.name.clone(), &current_json, &new_json);
             let _ = self.observers.send(update);
             *block_on(self.json_value.write()) = new_json;
         }

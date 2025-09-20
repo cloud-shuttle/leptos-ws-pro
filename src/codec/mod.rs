@@ -195,10 +195,15 @@ where
         #[cfg(feature = "compression")]
         {
             use std::io::Write;
-            let mut encoder = flate2::write::GzEncoder::new(Vec::new(), flate2::Compression::new(self.compression_level as u32));
-            encoder.write_all(&uncompressed)
+            let mut encoder = flate2::write::GzEncoder::new(
+                Vec::new(),
+                flate2::Compression::new(self.compression_level as u32),
+            );
+            encoder
+                .write_all(&uncompressed)
                 .map_err(|e| CodecError::CompressionFailed(e.to_string()))?;
-            encoder.finish()
+            encoder
+                .finish()
                 .map_err(|e| CodecError::CompressionFailed(e.to_string()))
         }
 
@@ -216,7 +221,8 @@ where
             use std::io::Read;
             let mut decoder = flate2::read::GzDecoder::new(data);
             let mut decompressed = Vec::new();
-            decoder.read_to_end(&mut decompressed)
+            decoder
+                .read_to_end(&mut decompressed)
                 .map_err(|e| CodecError::DecompressionFailed(e.to_string()))?;
             decompressed
         };
@@ -239,7 +245,16 @@ mod tests {
     use super::*;
     use serde::{Deserialize, Serialize};
 
-    #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)]
+    #[derive(
+        Debug,
+        Clone,
+        Serialize,
+        Deserialize,
+        PartialEq,
+        rkyv::Archive,
+        rkyv::Serialize,
+        rkyv::Deserialize,
+    )]
     struct TestMessage {
         id: u32,
         content: String,

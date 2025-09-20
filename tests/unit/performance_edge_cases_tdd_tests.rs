@@ -968,7 +968,6 @@ mod performance_monitoring_tests {
     async fn get_active_alerts(&self) -> Vec<PerformanceAlert> {
         self.active_alerts.clone()
     }
-}
 
 // Remove duplicate PerformanceManager definition - using imported one
 

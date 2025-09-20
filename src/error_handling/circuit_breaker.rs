@@ -2,8 +2,8 @@
 //!
 //! Circuit breaker implementation for fault tolerance
 
-use std::time::{Duration, Instant};
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 
 /// Circuit breaker state
 #[derive(Debug, Clone, PartialEq)]

@@ -2,16 +2,16 @@
 //!
 //! Client implementation for RPC communication
 
-use crate::rpc::types::*;
-use crate::rpc::correlation::RpcCorrelationManager;
 use crate::codec::JsonCodec;
+use crate::rpc::correlation::RpcCorrelationManager;
+use crate::rpc::types::*;
 use crate::transport::{Message, MessageType};
-use std::collections::HashMap;
-use std::sync::Arc;
-use tokio::sync::{mpsc, RwLock};
 use futures::Stream;
 use serde_json;
+use std::collections::HashMap;
+use std::sync::Arc;
 use std::time::Duration;
+use tokio::sync::{mpsc, RwLock};
 
 /// RPC client for WebSocket communication
 pub struct RpcClient<T> {
@@ -40,7 +40,12 @@ where
         }
     }
 
-    pub async fn call<U>(&self, method_name: &str, params: U, method_type: RpcMethod) -> Result<RpcResponse<T>, RpcError>
+    pub async fn call<U>(
+        &self,
+        method_name: &str,
+        params: U,
+        method_type: RpcMethod,
+    ) -> Result<RpcResponse<T>, RpcError>
     where
         U: serde::Serialize,
     {
@@ -53,12 +58,11 @@ where
         };
 
         // Encode the request to JSON
-        let request_json = serde_json::to_string(&request)
-            .map_err(|e| RpcError {
-                code: -32700,
-                message: format!("Parse error: {}", e),
-                data: None,
-            })?;
+        let request_json = serde_json::to_string(&request).map_err(|e| RpcError {
+            code: -32700,
+            message: format!("Parse error: {}", e),
+            data: None,
+        })?;
 
         // Create WebSocket message
         let message = Message {
@@ -67,21 +71,28 @@ where
         };
 
         // Send the request via WebSocket
-        self.message_sender.send(message)
-            .map_err(|_| RpcError {
-                code: -32603,
-                message: "Internal error: Failed to send message".to_string(),
-                data: None,
-            })?;
+        self.message_sender.send(message).map_err(|_| RpcError {
+            code: -32603,
+            message: "Internal error: Failed to send message".to_string(),
+            data: None,
+        })?;
 
         // Wait for response with timeout
-        self.wait_for_response(&request_id, Duration::from_secs(30)).await
+        self.wait_for_response(&request_id, Duration::from_secs(30))
+            .await
     }
 
     /// Wait for a response to a specific request ID
-    async fn wait_for_response(&self, request_id: &str, timeout: Duration) -> Result<RpcResponse<T>, RpcError> {
+    async fn wait_for_response(
+        &self,
+        request_id: &str,
+        timeout: Duration,
+    ) -> Result<RpcResponse<T>, RpcError> {
         // Use the correlation manager to wait for the response
-        let response_result = self.correlation_manager.wait_for_response(request_id, timeout).await
+        let response_result = self
+            .correlation_manager
+            .wait_for_response(request_id, timeout)
+            .await
             .map_err(|e| RpcError {
                 code: -32603,
                 message: format!("Request failed: {}", e),
@@ -102,7 +113,11 @@ where
         }
     }
 
-    pub async fn send_request<U>(&self, method: RpcMethod, params: U) -> Result<RpcResponse<T>, RpcError>
+    pub async fn send_request<U>(
+        &self,
+        method: RpcMethod,
+        params: U,
+    ) -> Result<RpcResponse<T>, RpcError>
     where
         U: serde::Serialize,
     {
@@ -110,7 +125,10 @@ where
         self.call(&method_string, params, method).await
     }
 
-    pub async fn subscribe(&self, params: SubscribeMessagesParams) -> Result<RpcSubscription<T>, RpcError> {
+    pub async fn subscribe(
+        &self,
+        params: SubscribeMessagesParams,
+    ) -> Result<RpcSubscription<T>, RpcError> {
         let subscription_id = uuid::Uuid::new_v4().to_string();
         let subscription = RpcSubscription::new(subscription_id.clone());
 
@@ -169,7 +187,8 @@ where
 
         // Send the response to the waiting request via the correlation manager
         let response_id = response.id.clone();
-        self.correlation_manager.complete_request(&response_id, Ok(response))
+        self.correlation_manager
+            .complete_request(&response_id, Ok(response))
             .map_err(|_| RpcError {
                 code: -32603,
                 message: "Failed to complete request".to_string(),

@@ -2,10 +2,8 @@
 //!
 //! Basic tests for error recovery functionality using the existing API
 
-use leptos_ws_pro::error_handling::{
-    ErrorContext, CircuitBreaker, ErrorType
-};
-use leptos_ws_pro::transport::{TransportError, ConnectionState};
+use leptos_ws_pro::error_handling::{CircuitBreaker, ErrorContext, ErrorType};
+use leptos_ws_pro::transport::{ConnectionState, TransportError};
 use std::time::Duration;
 
 #[tokio::test]
@@ -42,11 +40,18 @@ async fn test_circuit_breaker_recovery() {
     assert_eq!(breaker.get_state(), "open");
 
     // Verify the circuit is open and can't allow requests
-    assert!(!breaker.allow_request(), "Circuit should be open and not allow requests");
+    assert!(
+        !breaker.allow_request(),
+        "Circuit should be open and not allow requests"
+    );
 
     // Test that recording success doesn't immediately close an open circuit
     breaker.record_success();
-    assert_eq!(breaker.get_state(), "open", "Circuit should remain open until timeout");
+    assert_eq!(
+        breaker.get_state(),
+        "open",
+        "Circuit should remain open until timeout"
+    );
 }
 
 #[tokio::test]
@@ -66,7 +71,10 @@ async fn test_error_context_creation() {
     assert_eq!(context.component, "websocket");
     assert_eq!(context.attempt_number, 1);
     assert_eq!(context.trace_id, Some("trace-123".to_string()));
-    assert_eq!(context.connection_state, Some(ConnectionState::Disconnected));
+    assert_eq!(
+        context.connection_state,
+        Some(ConnectionState::Disconnected)
+    );
 }
 
 #[tokio::test]

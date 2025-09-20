@@ -5,11 +5,9 @@
 
 // use futures::StreamExt; // TODO: Remove when used
 use leptos_ws_pro::transport::{
-    ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError,
-    websocket::WebSocketConnection,
-    sse::SseConnection,
-    webtransport::WebTransportConnection,
-    adaptive::AdaptiveTransport,
+    adaptive::AdaptiveTransport, sse::SseConnection, websocket::WebSocketConnection,
+    webtransport::WebTransportConnection, ConnectionState, Message, MessageType, Transport,
+    TransportConfig, TransportError,
 };
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -65,7 +63,11 @@ async fn test_all_transport_connection_failures() {
 
     // Test SSE connection failure
     let mut sse = SseConnection::new(config.clone()).await.unwrap();
-    let sse_result = timeout(Duration::from_secs(5), sse.connect("http://localhost:99999")).await;
+    let sse_result = timeout(
+        Duration::from_secs(5),
+        sse.connect("http://localhost:99999"),
+    )
+    .await;
     assert!(sse_result.is_ok());
     let connect_result = sse_result.unwrap();
     assert!(connect_result.is_err());
@@ -73,7 +75,11 @@ async fn test_all_transport_connection_failures() {
 
     // Test WebTransport connection failure
     let mut wt = WebTransportConnection::new(config.clone()).await.unwrap();
-    let wt_result = timeout(Duration::from_secs(5), wt.connect("https://localhost:99999")).await;
+    let wt_result = timeout(
+        Duration::from_secs(5),
+        wt.connect("https://localhost:99999"),
+    )
+    .await;
     assert!(wt_result.is_ok());
     let connect_result = wt_result.unwrap();
     assert!(connect_result.is_err());
@@ -164,7 +170,11 @@ async fn test_adaptive_transport_fallback() {
     let mut adaptive = AdaptiveTransport::new(config.clone()).await.unwrap();
 
     // Should fail to connect to non-existent server
-    let result = timeout(Duration::from_secs(10), adaptive.connect("ws://localhost:99999")).await;
+    let result = timeout(
+        Duration::from_secs(10),
+        adaptive.connect("ws://localhost:99999"),
+    )
+    .await;
     assert!(result.is_ok());
     let connect_result = result.unwrap();
     assert!(connect_result.is_err());
@@ -287,17 +297,17 @@ async fn test_error_type_consistency() {
 
     // This test ensures error types are consistent
     match connection_error {
-        TransportError::ConnectionFailed(_) => {},
+        TransportError::ConnectionFailed(_) => {}
         _ => panic!("Wrong error type"),
     }
 
     match send_error {
-        TransportError::SendFailed(_) => {},
+        TransportError::SendFailed(_) => {}
         _ => panic!("Wrong error type"),
     }
 
     match receive_error {
-        TransportError::ReceiveFailed(_) => {},
+        TransportError::ReceiveFailed(_) => {}
         _ => panic!("Wrong error type"),
     }
 }

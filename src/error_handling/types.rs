@@ -2,12 +2,12 @@
 //!
 //! Core error types, context structures, and error classification
 
-use crate::transport::{TransportError, ConnectionState};
-use crate::rpc::RpcError;
 use crate::codec::CodecError;
-use std::time::Duration;
+use crate::rpc::RpcError;
+use crate::transport::{ConnectionState, TransportError};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
+use std::time::Duration;
 use thiserror::Error;
 
 /// Main application error type with context and recovery suggestions

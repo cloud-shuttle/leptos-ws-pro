@@ -3,13 +3,13 @@
 //! This test suite ensures 100% coverage of the reactive functionality
 //! following TDD principles for v1.0 release.
 
+use leptos_ws_pro::codec::JsonCodec;
 use leptos_ws_pro::reactive::{
-    ConnectionMetrics, PresenceMap, UserPresence, WebSocketConfig, WebSocketContext,
-    WebSocketProvider, use_connection_metrics, use_connection_status, use_message_subscription,
-    use_presence, use_websocket,
+    use_connection_metrics, use_connection_status, use_message_subscription, use_presence,
+    use_websocket, ConnectionMetrics, PresenceMap, UserPresence, WebSocketConfig, WebSocketContext,
+    WebSocketProvider,
 };
 use leptos_ws_pro::transport::{ConnectionState, Message, MessageType, TransportError};
-use leptos_ws_pro::codec::JsonCodec;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Instant;
@@ -24,7 +24,6 @@ pub struct TestMessage {
 #[cfg(test)]
 mod reactive_core_tests {
     use super::*;
-
 
     #[test]
     fn test_websocket_provider_creation() {
@@ -175,7 +174,8 @@ mod reactive_core_tests {
                 id: 1,
                 content: "First message".to_string(),
                 timestamp: 1000,
-            }).unwrap(),
+            })
+            .unwrap(),
             message_type: MessageType::Text,
         };
 
@@ -184,7 +184,8 @@ mod reactive_core_tests {
                 id: 2,
                 content: "Second message".to_string(),
                 timestamp: 2000,
-            }).unwrap(),
+            })
+            .unwrap(),
             message_type: MessageType::Text,
         };
 
@@ -335,16 +336,22 @@ mod presence_tests {
     #[test]
     fn test_presence_map() {
         let mut users = HashMap::new();
-        users.insert("user1".to_string(), UserPresence {
-            user_id: "user1".to_string(),
-            status: "online".to_string(),
-            last_seen: 1000,
-        });
-        users.insert("user2".to_string(), UserPresence {
-            user_id: "user2".to_string(),
-            status: "away".to_string(),
-            last_seen: 2000,
-        });
+        users.insert(
+            "user1".to_string(),
+            UserPresence {
+                user_id: "user1".to_string(),
+                status: "online".to_string(),
+                last_seen: 1000,
+            },
+        );
+        users.insert(
+            "user2".to_string(),
+            UserPresence {
+                user_id: "user2".to_string(),
+                status: "away".to_string(),
+                last_seen: 2000,
+            },
+        );
 
         let presence_map = PresenceMap {
             users: users.clone(),

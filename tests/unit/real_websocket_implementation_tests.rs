@@ -5,8 +5,8 @@
 
 use futures::{SinkExt, StreamExt};
 use leptos_ws_pro::transport::{
-    ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError,
-    websocket::WebSocketConnection,
+    websocket::WebSocketConnection, ConnectionState, Message, MessageType, Transport,
+    TransportConfig, TransportError,
 };
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;

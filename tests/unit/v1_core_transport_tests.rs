@@ -4,8 +4,8 @@
 //! following TDD principles for v1.0 release.
 
 use leptos_ws_pro::transport::{
-    ConnectionState, Message, MessageType, TransportCapabilities, TransportConfig,
-    TransportError, TransportFactory,
+    ConnectionState, Message, MessageType, TransportCapabilities, TransportConfig, TransportError,
+    TransportFactory,
 };
 use std::time::Duration;
 // use tokio_test; // Not needed for these tests
@@ -67,7 +67,10 @@ mod transport_core_tests {
         let default_config = TransportConfig::default();
         assert!(default_config.url.is_empty());
         assert_eq!(default_config.timeout, Duration::from_secs(30));
-        assert_eq!(default_config.heartbeat_interval, Some(Duration::from_secs(30)));
+        assert_eq!(
+            default_config.heartbeat_interval,
+            Some(Duration::from_secs(30))
+        );
         assert_eq!(default_config.max_reconnect_attempts, Some(5));
         assert_eq!(default_config.reconnect_delay, Duration::from_secs(1));
 
@@ -246,13 +249,13 @@ mod transport_factory_tests {
         ];
 
         for (url, transport_type) in test_configs {
-        let config = TransportConfig {
-            url: url.to_string(),
-            connection_timeout: Duration::from_secs(30),
-            enable_compression: false,
-            max_message_size: 1024 * 1024,
-            ..Default::default()
-        };
+            let config = TransportConfig {
+                url: url.to_string(),
+                connection_timeout: Duration::from_secs(30),
+                enable_compression: false,
+                max_message_size: 1024 * 1024,
+                ..Default::default()
+            };
 
             match transport_type {
                 "websocket" => {
@@ -273,7 +276,8 @@ mod transport_factory_tests {
                     let result = TransportFactory::create_webtransport(config).await;
                     match result {
                         Ok(_) => assert!(true),
-                        Err(TransportError::NotSupported(_)) | Err(TransportError::ConnectionFailed(_)) => {
+                        Err(TransportError::NotSupported(_))
+                        | Err(TransportError::ConnectionFailed(_)) => {
                             // Expected on platforms without WebTransport
                             assert!(true);
                         }
@@ -341,8 +345,8 @@ mod transport_config_edge_cases {
                 .collect(),
             timeout: Duration::from_secs(u64::MAX / 1000), // Large but valid timeout
             heartbeat_interval: Some(Duration::from_millis(100)), // Very frequent
-            max_reconnect_attempts: Some(1000), // Many attempts
-            reconnect_delay: Duration::from_millis(1), // Very short delay
+            max_reconnect_attempts: Some(1000),            // Many attempts
+            reconnect_delay: Duration::from_millis(1),     // Very short delay
             connection_timeout: Duration::from_secs(30),
             enable_compression: true,
             max_message_size: 10 * 1024 * 1024, // 10MB

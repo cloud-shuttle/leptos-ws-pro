@@ -3,9 +3,7 @@
 //! This test suite ensures 100% coverage of the codec functionality
 //! following TDD principles for v1.0 release.
 
-use leptos_ws_pro::codec::{
-    Codec, CodecError, HybridCodec, JsonCodec, RkyvCodec, WsMessage,
-};
+use leptos_ws_pro::codec::{Codec, CodecError, HybridCodec, JsonCodec, RkyvCodec, WsMessage};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -35,7 +33,7 @@ impl TestData {
     pub fn large() -> Self {
         Self {
             id: u64::MAX,
-            name: "x".repeat(10000), // Large string
+            name: "x".repeat(10000),      // Large string
             values: (0..10000).collect(), // Large vector
             metadata: (0..1000)
                 .map(|i| (format!("key_{}", i), format!("value_{}", i)))
@@ -48,7 +46,6 @@ impl TestData {
 mod codec_core_tests {
     use super::*;
 
-
     #[test]
     fn test_json_codec_basic_roundtrip() {
         let codec = JsonCodec::new();
@@ -57,7 +54,10 @@ mod codec_core_tests {
         // Test encode
         let encoded = codec.encode(&data).unwrap();
         assert!(!encoded.is_empty());
-        assert_eq!(<JsonCodec as Codec<TestData>>::content_type(&codec), "application/json");
+        assert_eq!(
+            <JsonCodec as Codec<TestData>>::content_type(&codec),
+            "application/json"
+        );
 
         // Verify it's valid JSON
         let json_value: serde_json::Value = serde_json::from_slice(&encoded).unwrap();
@@ -114,7 +114,10 @@ mod codec_core_tests {
 
         let encoded = codec.encode(&data).unwrap();
         assert!(!encoded.is_empty());
-        assert_eq!(<RkyvCodec as Codec<TestData>>::content_type(&codec), "application/rkyv");
+        assert_eq!(
+            <RkyvCodec as Codec<TestData>>::content_type(&codec),
+            "application/rkyv"
+        );
 
         let decoded = codec.decode(&encoded).unwrap();
         assert_eq!(data, decoded);
@@ -123,7 +126,10 @@ mod codec_core_tests {
     #[test]
     fn test_hybrid_codec_creation() {
         let codec = HybridCodec::new().unwrap();
-        assert_eq!(<HybridCodec as Codec<TestData>>::content_type(&codec), "application/hybrid");
+        assert_eq!(
+            <HybridCodec as Codec<TestData>>::content_type(&codec),
+            "application/hybrid"
+        );
     }
 
     #[test]
@@ -259,7 +265,11 @@ mod codec_performance_tests {
         let elapsed = start.elapsed();
 
         // Should complete in reasonable time (less than 1 second for 1000 iterations)
-        assert!(elapsed.as_secs() < 1, "JSON codec took too long: {:?}", elapsed);
+        assert!(
+            elapsed.as_secs() < 1,
+            "JSON codec took too long: {:?}",
+            elapsed
+        );
     }
 
     #[test]
@@ -276,7 +286,11 @@ mod codec_performance_tests {
         let elapsed = start.elapsed();
 
         // Should complete in reasonable time
-        assert!(elapsed.as_secs() < 2, "Hybrid codec took too long: {:?}", elapsed);
+        assert!(
+            elapsed.as_secs() < 2,
+            "Hybrid codec took too long: {:?}",
+            elapsed
+        );
     }
 }
 
@@ -300,7 +314,10 @@ mod codec_edge_cases {
             id: 1,
             name: "some".to_string(),
             values: vec![1],
-            metadata: [("key".to_string(), "value".to_string())].iter().cloned().collect(),
+            metadata: [("key".to_string(), "value".to_string())]
+                .iter()
+                .cloned()
+                .collect(),
         };
 
         let encoded = codec.encode(&data_some).unwrap();
@@ -331,7 +348,10 @@ mod codec_edge_cases {
             metadata: [
                 ("null".to_string(), "\0".to_string()),
                 ("control".to_string(), "\x01\x02\x03".to_string()),
-            ].iter().cloned().collect(),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
         };
 
         let encoded = codec.encode(&special_data).unwrap();

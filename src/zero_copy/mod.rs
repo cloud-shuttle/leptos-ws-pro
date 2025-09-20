@@ -2,11 +2,11 @@
 //!
 //! High-performance zero-copy serialization using rkyv
 
-pub mod codec;
-pub mod buffer;
 pub mod benchmark;
+pub mod buffer;
+pub mod codec;
 
 // Re-export main types
-pub use codec::{ZeroCopyCodec, ZeroCopyMessage, MessageMetadata};
-pub use buffer::{ZeroCopyBuffer, MessageBatch};
-pub use benchmark::{ZeroCopyBenchmark, BenchmarkResult};
+pub use benchmark::{BenchmarkResult, ZeroCopyBenchmark};
+pub use buffer::{MessageBatch, ZeroCopyBuffer};
+pub use codec::{MessageMetadata, ZeroCopyCodec, ZeroCopyMessage};

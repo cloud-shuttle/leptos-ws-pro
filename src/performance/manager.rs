@@ -3,12 +3,12 @@
 //! Coordinates all performance optimizations including connection pooling,
 //! message batching, caching, and monitoring
 
-use std::collections::HashMap;
-use std::time::Duration;
+use crate::performance::cache::MessageCache;
 use crate::performance::connection_pool::{ConnectionPool, PooledConnection};
 use crate::performance::message_batcher::MessageBatcher;
-use crate::performance::cache::MessageCache;
-use crate::performance::metrics::{MetricsCollector, PerformanceMetrics, PerformanceError};
+use crate::performance::metrics::{MetricsCollector, PerformanceError, PerformanceMetrics};
+use std::collections::HashMap;
+use std::time::Duration;
 
 /// Performance configuration
 #[derive(Debug, Clone)]
@@ -225,7 +225,10 @@ impl PerformanceManager {
     }
 
     /// Schedule a CPU-intensive task with throttling
-    pub async fn schedule_cpu_task<F, T>(&self, task: F) -> tokio::task::JoinHandle<Result<T, PerformanceError>>
+    pub async fn schedule_cpu_task<F, T>(
+        &self,
+        task: F,
+    ) -> tokio::task::JoinHandle<Result<T, PerformanceError>>
     where
         F: std::future::Future<Output = T> + Send + 'static,
         T: Send + 'static,
@@ -233,7 +236,11 @@ impl PerformanceManager {
         if let Some(throttler) = &self.cpu_throttler {
             throttler.schedule_task(task).await
         } else {
-            tokio::spawn(async { Err(PerformanceError::MetricsError("CPU throttling disabled".to_string())) })
+            tokio::spawn(async {
+                Err(PerformanceError::MetricsError(
+                    "CPU throttling disabled".to_string(),
+                ))
+            })
         }
     }
 
@@ -255,9 +262,12 @@ impl PerformanceManager {
         }
     }
 
-
     /// Schedule a priority task
-    pub async fn schedule_priority_task<F, Fut, T>(&mut self, _priority: MessagePriority, f: F) -> tokio::task::JoinHandle<T>
+    pub async fn schedule_priority_task<F, Fut, T>(
+        &mut self,
+        _priority: MessagePriority,
+        f: F,
+    ) -> tokio::task::JoinHandle<T>
     where
         F: FnOnce() -> Fut + Send + 'static,
         Fut: std::future::Future<Output = T> + Send + 'static,
@@ -333,10 +343,10 @@ pub enum MessagePriority {
 /// Message size categories
 #[derive(Debug, Clone, PartialEq)]
 pub enum SizeCategory {
-    Small,   // < 1KB
-    Medium,  // 1KB - 10KB
-    Large,   // 10KB - 100KB
-    Huge,    // > 100KB
+    Small,  // < 1KB
+    Medium, // 1KB - 10KB
+    Large,  // 10KB - 100KB
+    Huge,   // > 100KB
 }
 
 // Placeholder types for now - these will be moved to their respective modules
@@ -345,27 +355,42 @@ pub struct CpuThrottler;
 pub struct NetworkOptimizer;
 
 impl MemoryMonitor {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
     pub fn add_memory(&self, _size: usize) {}
-    pub async fn get_memory_usage(&self) -> f64 { 0.0 }
-    pub async fn is_pressure_detected(&self) -> bool { false }
+    pub async fn get_memory_usage(&self) -> f64 {
+        0.0
+    }
+    pub async fn is_pressure_detected(&self) -> bool {
+        false
+    }
 }
 
 impl CpuThrottler {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
     pub async fn set_threshold(&mut self, _threshold: f64) {}
-    pub async fn schedule_task<F, T>(&self, task: F) -> tokio::task::JoinHandle<Result<T, PerformanceError>>
+    pub async fn schedule_task<F, T>(
+        &self,
+        task: F,
+    ) -> tokio::task::JoinHandle<Result<T, PerformanceError>>
     where
         F: std::future::Future<Output = T> + Send + 'static,
         T: Send + 'static,
     {
         tokio::spawn(async { Ok(task.await) })
     }
-    pub async fn get_cpu_usage(&self) -> f64 { 0.0 }
+    pub async fn get_cpu_usage(&self) -> f64 {
+        0.0
+    }
 }
 
 impl NetworkOptimizer {
-    pub fn new() -> Self { Self }
+    pub fn new() -> Self {
+        Self
+    }
     pub async fn optimize(&self, data: &[u8]) -> Result<Vec<u8>, PerformanceError> {
         Ok(data.to_vec())
     }

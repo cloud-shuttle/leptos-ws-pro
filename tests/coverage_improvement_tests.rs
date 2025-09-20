@@ -2,16 +2,16 @@
 //!
 //! These tests target uncovered code paths identified by tarpaulin
 
-use leptos_ws_pro::{
-    codec::{JsonCodec, RkyvCodec, HybridCodec, Codec, WsMessage},
-    error_handling::{ErrorContext, ErrorRecoveryHandler, CircuitBreaker},
-    performance::{PerformanceManager, ConnectionPool, MessageBatcher, MessageCache},
-    security::{RateLimiter, InputValidator, ThreatDetector, CsrfProtector, TokenBucket},
-    transport::{TransportConfig, TransportCapabilities, Message, MessageType},
-    zero_copy::{ZeroCopyBuffer, ZeroCopyCodec, MessageBatch},
-    rpc::correlation::RpcCorrelationManager,
-};
 use leptos_ws_pro::error_handling::circuit_breaker::CircuitBreakerState;
+use leptos_ws_pro::{
+    codec::{Codec, HybridCodec, JsonCodec, RkyvCodec, WsMessage},
+    error_handling::{CircuitBreaker, ErrorContext, ErrorRecoveryHandler},
+    performance::{ConnectionPool, MessageBatcher, MessageCache, PerformanceManager},
+    rpc::correlation::RpcCorrelationManager,
+    security::{CsrfProtector, InputValidator, RateLimiter, ThreatDetector, TokenBucket},
+    transport::{Message, MessageType, TransportCapabilities, TransportConfig},
+    zero_copy::{MessageBatch, ZeroCopyBuffer, ZeroCopyCodec},
+};
 
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -34,7 +34,10 @@ mod coverage_tests {
         assert_eq!(context.operation, "test_operation");
 
         let context_with_state = context.with_connection_state("Connected".to_string());
-        assert_eq!(context_with_state.connection_state, Some("Connected".to_string()));
+        assert_eq!(
+            context_with_state.connection_state,
+            Some("Connected".to_string())
+        );
 
         let context_with_attempt = context_with_state.with_attempt(3);
         assert_eq!(context_with_attempt.attempt_count, Some(3));
@@ -43,7 +46,10 @@ mod coverage_tests {
         assert_eq!(context_with_trace.trace_id, Some("trace_123".to_string()));
 
         let context_with_session = context_with_trace.with_session_id("session_456".to_string());
-        assert_eq!(context_with_session.session_id, Some("session_456".to_string()));
+        assert_eq!(
+            context_with_session.session_id,
+            Some("session_456".to_string())
+        );
     }
 
     #[test]
@@ -66,10 +72,13 @@ mod coverage_tests {
 
     #[tokio::test]
     async fn test_performance_manager() {
-        let manager = PerformanceManager::new(leptos_ws_pro::performance::PerformanceConfig::default());
+        let manager =
+            PerformanceManager::new(leptos_ws_pro::performance::PerformanceConfig::default());
 
         // Test connection pool
-        let pool = ConnectionPool::new(leptos_ws_pro::performance::ConnectionPoolConfig::default()).await.unwrap();
+        let pool = ConnectionPool::new(leptos_ws_pro::performance::ConnectionPoolConfig::default())
+            .await
+            .unwrap();
         let connection = pool.get_connection();
         assert!(connection.is_ok());
 
@@ -197,7 +206,11 @@ mod coverage_tests {
 
         // Test zero copy codec
         let codec = ZeroCopyCodec::new();
-        let test_data = TestData { id: 42, name: "test".to_string(), value: 3.14 };
+        let test_data = TestData {
+            id: 42,
+            name: "test".to_string(),
+            value: 3.14,
+        };
         let encoded = codec.encode(&test_data);
         assert!(encoded.is_ok());
 
@@ -216,7 +229,8 @@ mod coverage_tests {
         let mut manager = RpcCorrelationManager::new();
 
         // Test request registration
-        let (request_id, receiver) = manager.register_request("test_method".to_string(), "test_id".to_string());
+        let (request_id, receiver) =
+            manager.register_request("test_method".to_string(), "test_id".to_string());
         assert!(!request_id.is_empty());
         assert_eq!(manager.pending_count(), 1);
 
@@ -242,7 +256,11 @@ mod coverage_tests {
         assert_eq!(hybrid_codec.content_type(), "application/hybrid");
 
         // Test with empty data
-        let empty_data = TestData { id: 0, name: String::new(), value: 0.0 };
+        let empty_data = TestData {
+            id: 0,
+            name: String::new(),
+            value: 0.0,
+        };
         let encoded = json_codec.encode(&empty_data);
         assert!(encoded.is_ok());
 
@@ -250,7 +268,7 @@ mod coverage_tests {
         let large_data = TestData {
             id: u32::MAX,
             name: "x".repeat(10000),
-            value: f64::MAX
+            value: f64::MAX,
         };
         let encoded = json_codec.encode(&large_data);
         assert!(encoded.is_ok());
@@ -262,7 +280,7 @@ mod coverage_tests {
 
         // Test error handling
         let error = leptos_ws_pro::error_handling::LeptosWsError::Transport(
-            leptos_ws_pro::transport::TransportError::ConnectionFailed("test".to_string())
+            leptos_ws_pro::transport::TransportError::ConnectionFailed("test".to_string()),
         );
         let result = handler.handle_error(&error, || Ok::<(), _>(()));
         assert!(result.is_ok());
@@ -270,7 +288,11 @@ mod coverage_tests {
 
     #[test]
     fn test_ws_message_wrapper() {
-        let data = TestData { id: 123, name: "wrapper_test".to_string(), value: 1.23 };
+        let data = TestData {
+            id: 123,
+            name: "wrapper_test".to_string(),
+            value: 1.23,
+        };
         let message = WsMessage::new(data.clone());
 
         assert_eq!(message.data.id, 123);

@@ -2,10 +2,10 @@
 //!
 //! Authentication, threat detection, and CSRF protection
 
+use crate::error_handling::ThreatLevel;
+use crate::security::manager::{SecurityError, SecurityRequest};
 use std::collections::HashMap;
 use std::time::SystemTime;
-use crate::error_handling::ThreatLevel;
-use crate::security::manager::{SecurityRequest, SecurityError};
 
 /// Authenticator for user authentication
 pub struct Authenticator {
@@ -131,7 +131,13 @@ impl CsrfProtector {
     }
 
     pub fn generate_token(&mut self) -> String {
-        let token = format!("csrf_{}", SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs());
+        let token = format!(
+            "csrf_{}",
+            SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+        );
         self.tokens.insert(token.clone(), SystemTime::now());
         token
     }

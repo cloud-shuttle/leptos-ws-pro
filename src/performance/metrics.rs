@@ -2,10 +2,10 @@
 //!
 //! Collects and tracks performance metrics, profiling, and monitoring
 
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
-use serde::{Serialize, Deserialize};
 use tokio::sync::RwLock;
 
 /// Performance metrics collector
@@ -121,7 +121,10 @@ impl PerformanceProfiler {
     pub fn end_span(&mut self, name: &str) {
         if let Some(start_time) = self.active_spans.remove(name) {
             let duration = start_time.elapsed();
-            self.samples.entry(name.to_string()).or_insert_with(Vec::new).push(duration);
+            self.samples
+                .entry(name.to_string())
+                .or_insert_with(Vec::new)
+                .push(duration);
         }
     }
 

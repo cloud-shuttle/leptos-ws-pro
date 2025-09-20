@@ -5,8 +5,8 @@
 
 use futures::{SinkExt, StreamExt};
 use leptos_ws_pro::transport::{
-    ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError,
-    webtransport::WebTransportConnection,
+    webtransport::WebTransportConnection, ConnectionState, Message, MessageType, Transport,
+    TransportConfig, TransportError,
 };
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -67,7 +67,10 @@ async fn test_webtransport_message_sending() {
         ..Default::default()
     };
     let mut client = WebTransportConnection::new(config).await.unwrap();
-    client.connect(&format!("https://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("https://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Client sends a text message
     let message = Message {
@@ -98,7 +101,10 @@ async fn test_webtransport_binary_message() {
         ..Default::default()
     };
     let mut client = WebTransportConnection::new(config).await.unwrap();
-    client.connect(&format!("https://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("https://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Client sends a binary message
     let binary_data = vec![0x01, 0x02, 0x03, 0x04, 0x05];
@@ -128,7 +134,11 @@ async fn test_webtransport_connection_timeout() {
     let mut client = WebTransportConnection::new(config).await.unwrap();
 
     // When: Client tries to connect to non-existent server
-    let result = timeout(Duration::from_secs(5), client.connect("https://127.0.0.1:99999")).await;
+    let result = timeout(
+        Duration::from_secs(5),
+        client.connect("https://127.0.0.1:99999"),
+    )
+    .await;
 
     // Then: Should fail with connection error
     assert!(result.is_ok()); // Timeout completed
@@ -152,7 +162,10 @@ async fn test_webtransport_disconnect() {
         ..Default::default()
     };
     let mut client = WebTransportConnection::new(config).await.unwrap();
-    client.connect(&format!("https://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("https://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     assert_eq!(client.state(), ConnectionState::Connected);
 
     // When: Client disconnects
@@ -176,7 +189,10 @@ async fn test_webtransport_reconnection() {
     let mut client = WebTransportConnection::new(config).await.unwrap();
 
     // First connection
-    client.connect(&format!("https://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("https://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     assert_eq!(client.state(), ConnectionState::Connected);
 
     // Disconnect
@@ -202,7 +218,10 @@ async fn test_webtransport_serialized_message() {
         ..Default::default()
     };
     let mut client = WebTransportConnection::new(config).await.unwrap();
-    client.connect(&format!("https://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("https://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Client sends a serialized message
     let test_msg = TestMessage {
@@ -245,7 +264,10 @@ async fn test_webtransport_multiple_messages() {
         ..Default::default()
     };
     let mut client = WebTransportConnection::new(config).await.unwrap();
-    client.connect(&format!("https://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("https://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Client sends multiple messages
     let (mut stream, mut sink) = client.split();
@@ -290,7 +312,10 @@ async fn test_webtransport_http3_protocol_features() {
         ..Default::default()
     };
     let mut client = WebTransportConnection::new(config).await.unwrap();
-    client.connect(&format!("https://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("https://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Testing HTTP/3 specific features
     let (mut stream, mut sink) = client.split();

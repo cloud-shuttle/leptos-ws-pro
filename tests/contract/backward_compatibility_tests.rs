@@ -16,7 +16,11 @@ struct ApiVersion {
 
 impl ApiVersion {
     fn new(major: u32, minor: u32, patch: u32) -> Self {
-        Self { major, minor, patch }
+        Self {
+            major,
+            minor,
+            patch,
+        }
     }
 
     fn to_string(&self) -> String {
@@ -83,7 +87,11 @@ impl VersionedApiClient {
         }
     }
 
-    fn handle_request(&self, request: &Value, client_version: &ApiVersion) -> Result<Value, String> {
+    fn handle_request(
+        &self,
+        request: &Value,
+        client_version: &ApiVersion,
+    ) -> Result<Value, String> {
         // Check version compatibility
         if !self.is_version_supported(client_version) {
             return Err(format!(
@@ -114,8 +122,13 @@ impl VersionedApiClient {
         // Check for deprecated message format
         if let Some(message_type) = request.get("message_type") {
             let message_type_str = message_type.as_str().unwrap_or("");
-            if message_type_str == "legacy" && self.is_feature_deprecated("old_message_format", client_version) {
-                return Err("Deprecated message format: 'legacy'. Use 'json' or 'rkyv' instead.".to_string());
+            if message_type_str == "legacy"
+                && self.is_feature_deprecated("old_message_format", client_version)
+            {
+                return Err(
+                    "Deprecated message format: 'legacy'. Use 'json' or 'rkyv' instead."
+                        .to_string(),
+                );
             }
         }
 
@@ -256,7 +269,10 @@ fn test_deprecated_feature_rejection() {
     });
 
     let response = server.handle_request(&deprecated_message_request, &new_client);
-    assert!(response.is_err(), "Deprecated message format should be rejected");
+    assert!(
+        response.is_err(),
+        "Deprecated message format should be rejected"
+    );
     assert!(response.unwrap_err().contains("Deprecated message format"));
 }
 
@@ -273,7 +289,10 @@ fn test_deprecated_feature_acceptance_with_old_client() {
     });
 
     let response = server.handle_request(&deprecated_request, &old_client);
-    assert!(response.is_ok(), "Deprecated feature should work with old client");
+    assert!(
+        response.is_ok(),
+        "Deprecated feature should work with old client"
+    );
 
     // Test deprecated message format with old client (should work)
     let deprecated_message_request = json!({
@@ -284,7 +303,10 @@ fn test_deprecated_feature_acceptance_with_old_client() {
     });
 
     let response = server.handle_request(&deprecated_message_request, &old_client);
-    assert!(response.is_ok(), "Deprecated message format should work with old client");
+    assert!(
+        response.is_ok(),
+        "Deprecated message format should work with old client"
+    );
 }
 
 #[test]

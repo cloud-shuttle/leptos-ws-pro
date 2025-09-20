@@ -4,13 +4,13 @@
 //! with support for request/response patterns and streaming
 
 pub mod advanced;
+pub mod client;
 pub mod correlation;
 pub mod types;
-pub mod client;
 
 // Re-export main types
-pub use types::*;
 pub use client::{RpcClient, RpcSubscription};
+pub use types::*;
 
 // Re-export advanced RPC types
 #[cfg(feature = "advanced-rpc")]

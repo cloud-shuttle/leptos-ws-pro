@@ -26,9 +26,12 @@ pub fn App() -> impl IntoView {
         context.set_connection_state(ConnectionState::Connecting);
 
         // Simulate connection after a delay
-        set_timeout(move || {
-            context.set_connection_state(ConnectionState::Connected);
-        }, 1000);
+        set_timeout(
+            move || {
+                context.set_connection_state(ConnectionState::Connected);
+            },
+            1000,
+        );
     };
 
     // Handle disconnect button click
@@ -215,7 +218,10 @@ mod tests {
         let context = WebSocketContext::new(provider);
 
         // Test initial connection state
-        assert_eq!(context.connection_state.get(), ConnectionState::Disconnected);
+        assert_eq!(
+            context.connection_state.get(),
+            ConnectionState::Disconnected
+        );
         assert!(!context.is_connected());
     }
 }

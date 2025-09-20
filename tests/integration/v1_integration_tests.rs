@@ -4,9 +4,12 @@
 //! following TDD principles for v1.0 release.
 
 use leptos_ws_pro::{
-    codec::{JsonCodec, Codec, WsMessage},
-    reactive::{WebSocketContext, WebSocketProvider, ConnectionMetrics, UserPresence},
-    rpc::{RpcClient, RpcRequest, RpcResponse, RpcMethod, RpcError, SendMessageParams, ChatMessage, SubscribeMessagesParams},
+    codec::{Codec, JsonCodec, WsMessage},
+    reactive::{ConnectionMetrics, UserPresence, WebSocketContext, WebSocketProvider},
+    rpc::{
+        ChatMessage, RpcClient, RpcError, RpcMethod, RpcRequest, RpcResponse, SendMessageParams,
+        SubscribeMessagesParams,
+    },
     transport::{ConnectionState, Message, MessageType, TransportConfig, TransportFactory},
 };
 use serde::{Deserialize, Serialize};
@@ -23,7 +26,6 @@ pub struct IntegrationTestData {
 #[cfg(test)]
 mod integration_core_tests {
     use super::*;
-
 
     #[tokio::test]
     async fn test_full_websocket_stack_integration() {
@@ -48,7 +50,9 @@ mod integration_core_tests {
             test_id: 1,
             payload: "Integration test".to_string(),
             metadata: [("source".to_string(), "test_suite".to_string())]
-                .iter().cloned().collect(),
+                .iter()
+                .cloned()
+                .collect(),
         };
 
         let encoded = codec.encode(&test_data).unwrap();
@@ -83,11 +87,15 @@ mod integration_core_tests {
         };
 
         // Test query method
-        let query_result = rpc_client.query::<SendMessageParams>("get_message", params.clone()).await;
+        let query_result = rpc_client
+            .query::<SendMessageParams>("get_message", params.clone())
+            .await;
         assert!(query_result.is_ok()); // Should succeed with mock implementation
 
         // Test mutation method
-        let mutation_result = rpc_client.mutation::<SendMessageParams>("send_message", params.clone()).await;
+        let mutation_result = rpc_client
+            .mutation::<SendMessageParams>("send_message", params.clone())
+            .await;
         assert!(mutation_result.is_ok()); // Should succeed with mock implementation
 
         // Verify ID generation worked
@@ -104,7 +112,9 @@ mod integration_core_tests {
             url: "ws://localhost:8080".to_string(),
             protocols: vec!["chat".to_string()],
             headers: [("User-Agent".to_string(), "leptos-ws-test".to_string())]
-                .iter().cloned().collect(),
+                .iter()
+                .cloned()
+                .collect(),
             timeout: Duration::from_secs(10),
             heartbeat_interval: Some(Duration::from_secs(15)),
             max_reconnect_attempts: Some(3),
@@ -149,7 +159,9 @@ mod integration_core_tests {
                 test_id: 42,
                 payload: "RPC integration test".to_string(),
                 metadata: [("type".to_string(), "integration".to_string())]
-                    .iter().cloned().collect(),
+                    .iter()
+                    .cloned()
+                    .collect(),
             },
             method_type: RpcMethod::Call,
         };
@@ -169,7 +181,9 @@ mod integration_core_tests {
                 test_id: 42,
                 payload: "Response data".to_string(),
                 metadata: [("status".to_string(), "success".to_string())]
-                    .iter().cloned().collect(),
+                    .iter()
+                    .cloned()
+                    .collect(),
             }),
             error: None,
         };
@@ -260,7 +274,9 @@ mod integration_core_tests {
             test_id: 1,
             payload: "Metrics test data".to_string(),
             metadata: [("test".to_string(), "metrics".to_string())]
-                .iter().cloned().collect(),
+                .iter()
+                .cloned()
+                .collect(),
         };
 
         // Encode data and create messages
@@ -322,13 +338,15 @@ mod integration_core_tests {
             metadata: std::collections::HashMap::new(),
         };
 
-        let rpc_result = rpc_client.query::<IntegrationTestData>("error_method", test_params).await;
+        let rpc_result = rpc_client
+            .query::<IntegrationTestData>("error_method", test_params)
+            .await;
         assert!(rpc_result.is_err());
 
         match rpc_result {
             Err(RpcError { code, message, .. }) => {
                 assert_eq!(code, -32603); // Internal error code
-                // Check for any error message (the exact message may vary)
+                                          // Check for any error message (the exact message may vary)
                 assert!(!message.is_empty());
             }
             _ => panic!("Expected RpcError"),
@@ -397,7 +415,13 @@ mod integration_core_tests {
 
         // Test with RPC client
         let rpc_client = RpcClient::<IntegrationTestData>::new(context.clone(), JsonCodec);
-        let subscription = rpc_client.subscribe(SubscribeMessagesParams { channel: Some("ack_test".to_string()), room_id: None }).await.unwrap();
+        let subscription = rpc_client
+            .subscribe(SubscribeMessagesParams {
+                channel: Some("ack_test".to_string()),
+                room_id: None,
+            })
+            .await
+            .unwrap();
 
         // Verify subscription creation doesn't interfere with acknowledgments
         assert_eq!(subscription.id, "rpc_1");
@@ -461,7 +485,11 @@ mod cross_module_compatibility_tests {
 
         for (state, should_allow_rpc) in states_and_methods {
             let allows_rpc = matches!(state, ConnectionState::Connected);
-            assert_eq!(allows_rpc, should_allow_rpc, "State {:?} RPC availability mismatch", state);
+            assert_eq!(
+                allows_rpc, should_allow_rpc,
+                "State {:?} RPC availability mismatch",
+                state
+            );
         }
     }
 
@@ -478,7 +506,10 @@ mod cross_module_compatibility_tests {
             metadata: [
                 ("layer".to_string(), "transport".to_string()),
                 ("encoding".to_string(), "json".to_string()),
-            ].iter().cloned().collect(),
+            ]
+            .iter()
+            .cloned()
+            .collect(),
         };
 
         // Step 1: Encode with codec
@@ -556,7 +587,9 @@ mod performance_integration_tests {
             test_id: 1,
             payload: "Performance test".to_string(),
             metadata: [("bench".to_string(), "throughput".to_string())]
-                .iter().cloned().collect(),
+                .iter()
+                .cloned()
+                .collect(),
         };
 
         let encoded_data = codec.encode(&test_data).unwrap();
@@ -567,7 +600,11 @@ mod performance_integration_tests {
         for i in 0..message_count {
             let message = Message {
                 data: encoded_data.clone(),
-                message_type: if i % 2 == 0 { MessageType::Text } else { MessageType::Binary },
+                message_type: if i % 2 == 0 {
+                    MessageType::Text
+                } else {
+                    MessageType::Binary
+                },
             };
             context.handle_message(message);
         }
@@ -577,13 +614,24 @@ mod performance_integration_tests {
         // Verify all messages processed
         let metrics = context.get_connection_metrics();
         assert_eq!(metrics.messages_received, message_count);
-        assert_eq!(metrics.bytes_received, (encoded_data.len() * message_count as usize) as u64);
+        assert_eq!(
+            metrics.bytes_received,
+            (encoded_data.len() * message_count as usize) as u64
+        );
 
         // Should process 1000 messages quickly (less than 100ms)
-        assert!(elapsed.as_millis() < 100, "Processing took too long: {:?}", elapsed);
+        assert!(
+            elapsed.as_millis() < 100,
+            "Processing took too long: {:?}",
+            elapsed
+        );
 
-        println!("Processed {} messages in {:?} ({:.2} msgs/ms)",
-                 message_count, elapsed, message_count as f64 / elapsed.as_millis() as f64);
+        println!(
+            "Processed {} messages in {:?} ({:.2} msgs/ms)",
+            message_count,
+            elapsed,
+            message_count as f64 / elapsed.as_millis() as f64
+        );
     }
 
     #[test]
@@ -601,13 +649,12 @@ mod performance_integration_tests {
         let large_data = IntegrationTestData {
             test_id: 1,
             payload: "x".repeat(10000), // 10KB string
-            metadata: (0..100).map(|i| (format!("key_{}", i), format!("value_{}", i))).collect(),
+            metadata: (0..100)
+                .map(|i| (format!("key_{}", i), format!("value_{}", i)))
+                .collect(),
         };
 
-        let test_cases = vec![
-            ("small", small_data),
-            ("large", large_data),
-        ];
+        let test_cases = vec![("small", small_data), ("large", large_data)];
 
         for (name, data) in test_cases {
             let start = Instant::now();
@@ -618,11 +665,21 @@ mod performance_integration_tests {
             }
 
             let elapsed = start.elapsed();
-            println!("{} data: {} iterations in {:?} ({:.2} ops/ms)",
-                     name, iterations, elapsed, iterations as f64 / elapsed.as_millis() as f64);
+            println!(
+                "{} data: {} iterations in {:?} ({:.2} ops/ms)",
+                name,
+                iterations,
+                elapsed,
+                iterations as f64 / elapsed.as_millis() as f64
+            );
 
             // Should complete in reasonable time (less than 1 second)
-            assert!(elapsed.as_secs() < 1, "{} data took too long: {:?}", name, elapsed);
+            assert!(
+                elapsed.as_secs() < 1,
+                "{} data took too long: {:?}",
+                name,
+                elapsed
+            );
         }
     }
 
@@ -645,10 +702,18 @@ mod performance_integration_tests {
         // ID generation is handled internally by the RPC client
 
         // Should be very fast (less than 10ms for 10k IDs)
-        assert!(elapsed.as_millis() < 10, "ID generation took too long: {:?}", elapsed);
+        assert!(
+            elapsed.as_millis() < 10,
+            "ID generation took too long: {:?}",
+            elapsed
+        );
 
-        println!("Generated {} IDs in {:?} ({:.2} IDs/ms)",
-                 iterations, elapsed, iterations as f64 / elapsed.as_millis() as f64);
+        println!(
+            "Generated {} IDs in {:?} ({:.2} IDs/ms)",
+            iterations,
+            elapsed,
+            iterations as f64 / elapsed.as_millis() as f64
+        );
     }
 }
 
@@ -676,7 +741,9 @@ mod concurrent_integration_tests {
                     test_id: task_id,
                     payload: format!("Concurrent task {}", task_id),
                     metadata: [("task_id".to_string(), task_id.to_string())]
-                        .iter().cloned().collect(),
+                        .iter()
+                        .cloned()
+                        .collect(),
                 };
 
                 let encoded = codec_clone.encode(&test_data).unwrap();
@@ -735,7 +802,10 @@ mod concurrent_integration_tests {
             let context_clone = context.clone();
 
             join_set.spawn(async move {
-                let rpc_client = RpcClient::<IntegrationTestData>::new(context_clone.as_ref().clone(), JsonCodec);
+                let rpc_client = RpcClient::<IntegrationTestData>::new(
+                    context_clone.as_ref().clone(),
+                    JsonCodec,
+                );
 
                 // Generate IDs concurrently
                 let mut ids = Vec::new();
@@ -805,10 +875,13 @@ mod concurrent_integration_tests {
         println!("Final connection state: {:?}", final_state);
 
         // Should be one of the valid states
-        assert!(matches!(final_state,
-            ConnectionState::Connecting | ConnectionState::Connected |
-            ConnectionState::Reconnecting | ConnectionState::Disconnected |
-            ConnectionState::Failed
+        assert!(matches!(
+            final_state,
+            ConnectionState::Connecting
+                | ConnectionState::Connected
+                | ConnectionState::Reconnecting
+                | ConnectionState::Disconnected
+                | ConnectionState::Failed
         ));
     }
 }

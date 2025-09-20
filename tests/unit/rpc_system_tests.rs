@@ -76,8 +76,13 @@ async fn test_rpc_subscription() {
     };
 
     // Create subscription
-    let subscription: RpcSubscription<TestRequest> =
-        client.subscribe(SubscribeMessagesParams { channel: Some("test".to_string()), room_id: None }).await.unwrap();
+    let subscription: RpcSubscription<TestRequest> = client
+        .subscribe(SubscribeMessagesParams {
+            channel: Some("test".to_string()),
+            room_id: None,
+        })
+        .await
+        .unwrap();
 
     // Subscription should be created with an ID
     assert!(!subscription.id.is_empty());
@@ -223,7 +228,13 @@ async fn test_rpc_subscription_lifecycle() {
     };
 
     // Create subscription
-    let subscription: RpcSubscription<TestRequest> = client.subscribe(SubscribeMessagesParams { channel: Some("lifecycle_test".to_string()), room_id: None }).await.unwrap();
+    let subscription: RpcSubscription<TestRequest> = client
+        .subscribe(SubscribeMessagesParams {
+            channel: Some("lifecycle_test".to_string()),
+            room_id: None,
+        })
+        .await
+        .unwrap();
     let subscription_id = subscription.id.clone();
 
     // Verify subscription was created

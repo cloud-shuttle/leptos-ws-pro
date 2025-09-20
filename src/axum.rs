@@ -3,12 +3,12 @@ use crate::{
     server_signals::ServerSignals,
 };
 use axum::extract::ws::Message;
-use futures::{SinkExt, StreamExt, future::BoxFuture, stream::SplitSink};
+use futures::{future::BoxFuture, stream::SplitSink, SinkExt, StreamExt};
 use leptos::logging::error;
 use std::sync::Arc;
 use tokio::{
     spawn,
-    sync::{RwLock, broadcast::Receiver},
+    sync::{broadcast::Receiver, RwLock},
 };
 
 async fn handle_broadcasts(

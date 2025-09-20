@@ -18,7 +18,11 @@ impl InputValidator {
         // Size check
         if payload.len() > self.max_size {
             return Err(SecurityError::InvalidInput {
-                reason: format!("Payload too large: {} bytes (max: {})", payload.len(), self.max_size),
+                reason: format!(
+                    "Payload too large: {} bytes (max: {})",
+                    payload.len(),
+                    self.max_size
+                ),
             });
         }
 
@@ -46,16 +50,14 @@ impl InputValidator {
 
     fn contains_suspicious_content(&self, payload: &[u8]) -> bool {
         // Simple pattern detection - in production use more sophisticated methods
-        let suspicious_patterns: &[&[u8]] = &[
-            b"<script",
-            b"javascript:",
-            b"eval(",
-            b"exec(",
-            b"system(",
-        ];
+        let suspicious_patterns: &[&[u8]] =
+            &[b"<script", b"javascript:", b"eval(", b"exec(", b"system("];
 
         for pattern in suspicious_patterns {
-            if payload.windows(pattern.len()).any(|window| window == *pattern) {
+            if payload
+                .windows(pattern.len())
+                .any(|window| window == *pattern)
+            {
                 return true;
             }
         }

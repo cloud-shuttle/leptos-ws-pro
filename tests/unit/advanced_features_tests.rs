@@ -1,8 +1,4 @@
-use leptos_ws_pro::{
-    codec::JsonCodec,
-    reactive::WebSocketContext,
-    rpc::RpcClient,
-};
+use leptos_ws_pro::{codec::JsonCodec, reactive::WebSocketContext, rpc::RpcClient};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tokio::time::timeout;
@@ -121,9 +117,10 @@ async fn test_message_retry_mechanism() {
     };
 
     // Send message (should succeed)
-    let result: Result<leptos_ws_pro::rpc::RpcResponse<TestMessage>, leptos_ws_pro::rpc::RpcError> = client
-        .call("test_method", message, leptos_ws_pro::rpc::RpcMethod::Call)
-        .await;
+    let result: Result<leptos_ws_pro::rpc::RpcResponse<TestMessage>, leptos_ws_pro::rpc::RpcError> =
+        client
+            .call("test_method", message, leptos_ws_pro::rpc::RpcMethod::Call)
+            .await;
     // This will fail with "not implemented" error, but that's expected for now
     assert!(result.is_err());
 

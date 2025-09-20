@@ -15,16 +15,20 @@ fn test_zero_compilation_warnings() {
         .expect("Failed to run cargo check");
 
     let stderr = String::from_utf8_lossy(&output.stderr);
-    
+
     // Then: Should have zero warnings
     let warning_count = stderr.matches("warning:").count();
-    
+
     if warning_count > 0 {
         println!("Found {} warnings:", warning_count);
         println!("{}", stderr);
     }
-    
-    assert_eq!(warning_count, 0, "Expected zero compilation warnings, found {}", warning_count);
+
+    assert_eq!(
+        warning_count, 0,
+        "Expected zero compilation warnings, found {}",
+        warning_count
+    );
 }
 
 #[test]
@@ -37,16 +41,20 @@ fn test_zero_compilation_errors() {
         .expect("Failed to run cargo check");
 
     let stderr = String::from_utf8_lossy(&output.stderr);
-    
+
     // Then: Should have zero errors
     let error_count = stderr.matches("error:").count();
-    
+
     if error_count > 0 {
         println!("Found {} errors:", error_count);
         println!("{}", stderr);
     }
-    
-    assert_eq!(error_count, 0, "Expected zero compilation errors, found {}", error_count);
+
+    assert_eq!(
+        error_count, 0,
+        "Expected zero compilation errors, found {}",
+        error_count
+    );
 }
 
 #[test]
@@ -60,12 +68,15 @@ fn test_cargo_fix_applicable_warnings() {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     let stderr = String::from_utf8_lossy(&output.stderr);
-    
+
     // Then: Should show what can be automatically fixed
     println!("Cargo fix dry run output:");
     println!("STDOUT: {}", stdout);
     println!("STDERR: {}", stderr);
-    
+
     // This test documents what cargo fix can handle
-    assert!(output.status.success() || !stderr.is_empty(), "Cargo fix should provide information about fixable warnings");
+    assert!(
+        output.status.success() || !stderr.is_empty(),
+        "Cargo fix should provide information about fixable warnings"
+    );
 }

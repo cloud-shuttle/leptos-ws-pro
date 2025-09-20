@@ -3,11 +3,13 @@
 //! High-performance serialization using rkyv
 
 use crate::codec::{Codec, CodecError};
+use serde::{Deserialize, Serialize};
 use std::marker::PhantomData;
-use serde::{Serialize, Deserialize};
 
 #[cfg(feature = "zero-copy")]
-use rkyv::{Archive, Serialize as RkyvSerialize, Deserialize as RkyvDeserialize, to_bytes, from_bytes};
+use rkyv::{
+    from_bytes, to_bytes, Archive, Deserialize as RkyvDeserialize, Serialize as RkyvSerialize,
+};
 
 /// Zero-copy codec using rkyv serialization
 pub struct ZeroCopyCodec<T> {
@@ -31,18 +33,28 @@ impl<T> Default for ZeroCopyCodec<T> {
 #[cfg(feature = "zero-copy")]
 impl<T> Codec<T> for ZeroCopyCodec<T>
 where
-    T: Archive + RkyvSerialize<rkyv::rancor::Strategy<rkyv::rancor::Panic, rkyv::rancor::Panic>> + for<'a> RkyvDeserialize<T, rkyv::rancor::Strategy<rkyv::rancor::Panic, rkyv::rancor::Panic>> + Clone + Send + Sync + 'static,
-    T::Archived: rkyv::Deserialize<T, rkyv::rancor::Strategy<rkyv::rancor::Panic, rkyv::rancor::Panic>>,
+    T: Archive
+        + RkyvSerialize<rkyv::rancor::Strategy<rkyv::rancor::Panic, rkyv::rancor::Panic>>
+        + for<'a> RkyvDeserialize<T, rkyv::rancor::Strategy<rkyv::rancor::Panic, rkyv::rancor::Panic>>
+        + Clone
+        + Send
+        + Sync
+        + 'static,
+    T::Archived:
+        rkyv::Deserialize<T, rkyv::rancor::Strategy<rkyv::rancor::Panic, rkyv::rancor::Panic>>,
 {
     fn encode(&self, message: &T) -> Result<Vec<u8>, CodecError> {
         to_bytes(message)
-            .map_err(|e| CodecError::SerializationFailed(format!("rkyv serialization failed: {}", e)))
+            .map_err(|e| {
+                CodecError::SerializationFailed(format!("rkyv serialization failed: {}", e))
+            })
             .map(|bytes| bytes.to_vec())
     }
 
     fn decode(&self, data: &[u8]) -> Result<T, CodecError> {
-        from_bytes(data)
-            .map_err(|e| CodecError::DeserializationFailed(format!("rkyv deserialization failed: {}", e)))
+        from_bytes(data).map_err(|e| {
+            CodecError::DeserializationFailed(format!("rkyv deserialization failed: {}", e))
+        })
     }
 
     fn content_type(&self) -> &'static str {
@@ -56,13 +68,18 @@ where
     T: Serialize + for<'de> Deserialize<'de> + Clone + Send + Sync + 'static,
 {
     fn encode(&self, message: &T) -> Result<Vec<u8>, CodecError> {
-        serde_json::to_vec(message)
-            .map_err(|e| CodecError::SerializationFailed(format!("JSON fallback serialization failed: {}", e)))
+        serde_json::to_vec(message).map_err(|e| {
+            CodecError::SerializationFailed(format!("JSON fallback serialization failed: {}", e))
+        })
     }
 
     fn decode(&self, data: &[u8]) -> Result<T, CodecError> {
-        serde_json::from_slice(data)
-            .map_err(|e| CodecError::DeserializationFailed(format!("JSON fallback deserialization failed: {}", e)))
+        serde_json::from_slice(data).map_err(|e| {
+            CodecError::DeserializationFailed(format!(
+                "JSON fallback deserialization failed: {}",
+                e
+            ))
+        })
     }
 
     fn content_type(&self) -> &'static str {

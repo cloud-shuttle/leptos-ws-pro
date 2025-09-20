@@ -6,7 +6,8 @@
 // use futures::{SinkExt, StreamExt}; // TODO: Remove when used
 #[cfg(feature = "advanced-rpc")]
 use leptos_ws_pro::rpc::advanced::{
-    BidirectionalRpcClient, RpcCorrelationManager, RpcMethodRegistry, RpcRequest, RpcResponse, RpcError,
+    BidirectionalRpcClient, RpcCorrelationManager, RpcError, RpcMethodRegistry, RpcRequest,
+    RpcResponse,
 };
 // use leptos_ws_pro::transport::Transport; // TODO: Remove when used
 use serde::{Deserialize, Serialize};
@@ -63,7 +64,11 @@ async fn run_rpc_echo_server(listener: TcpListener) {
 
                             // Send response back
                             let response_json = serde_json::to_string(&response).unwrap();
-                            let _ = write.send(tokio_tungstenite::tungstenite::Message::Text(response_json.into())).await;
+                            let _ = write
+                                .send(tokio_tungstenite::tungstenite::Message::Text(
+                                    response_json.into(),
+                                ))
+                                .await;
                         }
                     }
                 }
@@ -129,7 +134,10 @@ async fn test_request_response_correlation() {
     };
     let mut client = WebSocketConnection::new(config).await.unwrap();
 
-    client.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     let (mut stream, mut sink) = client.split();
 
     // When: Sending multiple RPC requests with different IDs
@@ -250,7 +258,11 @@ async fn test_rpc_error_propagation() {
                                 };
 
                                 let response_json = serde_json::to_string(&response).unwrap();
-                                let _ = write.send(tokio_tungstenite::tungstenite::Message::Text(response_json.into())).await;
+                                let _ = write
+                                    .send(tokio_tungstenite::tungstenite::Message::Text(
+                                        response_json.into(),
+                                    ))
+                                    .await;
                             }
                         }
                     }
@@ -266,7 +278,10 @@ async fn test_rpc_error_propagation() {
     let mut client = WebSocketConnection::new(config).await.unwrap();
 
     // When: Client connects and makes RPC call
-    client.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     let (mut stream, mut sink) = client.split();
 
     let request = TestRpcRequest {
@@ -311,7 +326,10 @@ async fn test_batch_rpc_calls() {
     };
     let mut client = WebSocketConnection::new(config).await.unwrap();
 
-    client.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     let (mut stream, mut sink) = client.split();
 
     // When: Sending batch RPC requests
@@ -376,8 +394,8 @@ async fn test_async_rpc_methods() {
     // Start async server
     tokio::spawn(async move {
         use futures::{SinkExt, StreamExt};
-        use tokio_tungstenite::accept_async;
         use std::time::Duration;
+        use tokio_tungstenite::accept_async;
 
         while let Ok((stream, _)) = listener.accept().await {
             let ws_stream = accept_async(stream).await.unwrap();
@@ -402,7 +420,11 @@ async fn test_async_rpc_methods() {
                                 };
 
                                 let response_json = serde_json::to_string(&response).unwrap();
-                                let _ = write.send(tokio_tungstenite::tungstenite::Message::Text(response_json.into())).await;
+                                let _ = write
+                                    .send(tokio_tungstenite::tungstenite::Message::Text(
+                                        response_json.into(),
+                                    ))
+                                    .await;
                             }
                         }
                     }
@@ -418,7 +440,10 @@ async fn test_async_rpc_methods() {
     let mut client = WebSocketConnection::new(config).await.unwrap();
 
     // When: Client connects and makes async RPC call
-    client.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     let (mut stream, mut sink) = client.split();
 
     let request = TestRpcRequest {
@@ -529,9 +554,7 @@ async fn test_advanced_rpc_method_registry() {
     let mut registry = RpcMethodRegistry::new();
 
     // When: Registering a method
-    registry.register("echo", |params| {
-        Ok(params)
-    });
+    registry.register("echo", |params| Ok(params));
 
     registry.register("add", |params| {
         let a: i32 = params["a"].as_i64().unwrap() as i32;
@@ -552,7 +575,7 @@ async fn test_advanced_rpc_method_registry() {
     let result = registry.call("nonexistent", serde_json::json!({}));
     assert!(result.is_err());
     match result.unwrap_err() {
-        RpcError::MethodNotFound(_) => {},
+        RpcError::MethodNotFound(_) => {}
         _ => panic!("Expected MethodNotFound error"),
     }
 
@@ -568,10 +591,14 @@ async fn test_advanced_bidirectional_rpc_client() {
     // Given: A WebSocket connection and RPC client
     let config = TransportConfig::default();
     let transport = WebSocketConnection::new(config).await.unwrap();
-    let client = BidirectionalRpcClient::new(transport, Duration::from_secs(5)).await.unwrap();
+    let client = BidirectionalRpcClient::new(transport, Duration::from_secs(5))
+        .await
+        .unwrap();
 
     // When: Making an RPC call
-    let result = client.call("echo", serde_json::json!({"message": "hello"})).await;
+    let result = client
+        .call("echo", serde_json::json!({"message": "hello"}))
+        .await;
 
     // Then: Should succeed
     assert!(result.is_ok());
@@ -589,10 +616,18 @@ async fn test_advanced_rpc_timeout() {
     // Given: A WebSocket connection and RPC client with short timeout
     let config = TransportConfig::default();
     let transport = WebSocketConnection::new(config).await.unwrap();
-    let client = BidirectionalRpcClient::new(transport, Duration::from_millis(100)).await.unwrap();
+    let client = BidirectionalRpcClient::new(transport, Duration::from_millis(100))
+        .await
+        .unwrap();
 
     // When: Making an RPC call with timeout
-    let result = client.call_with_timeout("echo", serde_json::json!({"message": "hello"}), Duration::from_millis(50)).await;
+    let result = client
+        .call_with_timeout(
+            "echo",
+            serde_json::json!({"message": "hello"}),
+            Duration::from_millis(50),
+        )
+        .await;
 
     // Then: Should succeed (our mock implementation is fast)
     assert!(result.is_ok());
@@ -613,7 +648,10 @@ async fn test_rpc_performance_metrics() {
     };
     let mut client = WebSocketConnection::new(config).await.unwrap();
 
-    client.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     let (mut stream, mut sink) = client.split();
 
     // When: Making multiple RPC calls and measuring performance
@@ -655,7 +693,11 @@ async fn test_rpc_performance_metrics() {
 
     // Performance assertions
     let avg_time_per_call = total_time.as_millis() / num_calls as u128;
-    assert!(avg_time_per_call < 100, "Average RPC call time should be < 100ms, got {}ms", avg_time_per_call);
+    assert!(
+        avg_time_per_call < 100,
+        "Average RPC call time should be < 100ms, got {}ms",
+        avg_time_per_call
+    );
 
     // Verify all responses are correct
     for (i, response) in responses.iter().enumerate() {

@@ -6,8 +6,14 @@ use crate::zero_copy::codec::ZeroCopyMessage;
 
 /// Batch message container for efficient bulk operations
 #[derive(Clone, Debug)]
-#[cfg_attr(feature = "zero-copy", derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize))]
-#[cfg_attr(not(feature = "zero-copy"), derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(
+    feature = "zero-copy",
+    derive(rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)
+)]
+#[cfg_attr(
+    not(feature = "zero-copy"),
+    derive(serde::Serialize, serde::Deserialize)
+)]
 pub struct MessageBatch<T> {
     pub batch_id: String,
     pub messages: Vec<ZeroCopyMessage<T>>,

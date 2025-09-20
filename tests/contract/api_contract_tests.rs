@@ -50,7 +50,9 @@ impl MockApiClient {
         if let Some(heartbeat_interval) = params.get("heartbeat_interval") {
             let interval = heartbeat_interval.as_i64().unwrap_or(0);
             if interval < 1000 || interval > 60000 {
-                return Err("Invalid heartbeat_interval: must be between 1000 and 60000".to_string());
+                return Err(
+                    "Invalid heartbeat_interval: must be between 1000 and 60000".to_string()
+                );
             }
         }
 
@@ -77,8 +79,14 @@ impl MockApiClient {
 
         let method = request.get("method").unwrap().as_str().unwrap();
         let valid_methods = [
-            "SendMessage", "GetMessages", "SubscribeMessages", "UnsubscribeMessages",
-            "GetConnectionState", "GetServerInfo", "Heartbeat", "Ping"
+            "SendMessage",
+            "GetMessages",
+            "SubscribeMessages",
+            "UnsubscribeMessages",
+            "GetConnectionState",
+            "GetServerInfo",
+            "Heartbeat",
+            "Ping",
         ];
 
         if !valid_methods.contains(&method) {
@@ -177,7 +185,10 @@ fn test_websocket_connection_contract() {
     });
 
     let connection = client.connect_websocket(&valid_params);
-    assert!(connection.is_ok(), "Valid connection parameters should succeed");
+    assert!(
+        connection.is_ok(),
+        "Valid connection parameters should succeed"
+    );
 
     let connection = connection.unwrap();
     assert_eq!(connection.get_state(), "connected");
@@ -190,7 +201,9 @@ fn test_websocket_connection_contract() {
 
     let result = client.connect_websocket(&invalid_params);
     assert!(result.is_err(), "Missing required parameter should fail");
-    assert!(result.unwrap_err().contains("Missing required parameter: url"));
+    assert!(result
+        .unwrap_err()
+        .contains("Missing required parameter: url"));
 
     // Test invalid protocol
     let invalid_protocol_params = json!({
@@ -271,7 +284,10 @@ fn test_subscription_contract() {
     });
 
     let response = client.subscribe(&valid_request);
-    assert!(response.is_ok(), "Valid subscription request should succeed");
+    assert!(
+        response.is_ok(),
+        "Valid subscription request should succeed"
+    );
 
     let response = response.unwrap();
     assert_eq!(response.get("subscription_id").unwrap(), "sub-123");
@@ -284,7 +300,9 @@ fn test_subscription_contract() {
 
     let result = client.subscribe(&invalid_request);
     assert!(result.is_err(), "Missing required fields should fail");
-    assert!(result.unwrap_err().contains("Missing required field: subscription_id"));
+    assert!(result
+        .unwrap_err()
+        .contains("Missing required field: subscription_id"));
 }
 
 #[test]
@@ -314,9 +332,11 @@ fn test_health_check_contract() {
 #[test]
 fn test_message_contract() {
     let client = MockApiClient::new("wss://api.example.com".to_string());
-    let connection = client.connect_websocket(&json!({
-        "url": "wss://api.example.com/ws"
-    })).unwrap();
+    let connection = client
+        .connect_websocket(&json!({
+            "url": "wss://api.example.com/ws"
+        }))
+        .unwrap();
 
     // Test valid message
     let valid_message = json!({
@@ -337,7 +357,9 @@ fn test_message_contract() {
 
     let result = connection.send_message(&invalid_message);
     assert!(result.is_err(), "Missing required fields should fail");
-    assert!(result.unwrap_err().contains("Missing required field: message_type"));
+    assert!(result
+        .unwrap_err()
+        .contains("Missing required field: message_type"));
 
     // Test invalid message type
     let invalid_type_message = json!({
@@ -373,7 +395,10 @@ fn test_error_response_contract() {
 
     // Validate error code
     let code = error.get("code").unwrap().as_i64().unwrap();
-    assert!(code >= 1000 && code < 4000, "Error code should be in valid range");
+    assert!(
+        code >= 1000 && code < 4000,
+        "Error code should be in valid range"
+    );
 
     // Validate error message
     let message = error.get("message").unwrap().as_str().unwrap();

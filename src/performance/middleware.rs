@@ -3,13 +3,13 @@
 //! Middleware for integrating performance optimizations with transport layer
 
 use crate::performance::{
-    ConnectionPool, MessageBatcher, MessageCache, PerformanceManager,
-    connection_pool::PooledConnection,
+    connection_pool::PooledConnection, ConnectionPool, MessageBatcher, MessageCache,
+    PerformanceManager,
 };
 use crate::transport::{Message, TransportError};
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use std::time::Duration;
+use tokio::sync::Mutex;
 
 /// Performance middleware for transport layer
 pub struct PerformanceMiddleware {
@@ -35,9 +35,13 @@ impl PerformanceMiddleware {
     }
 
     /// Get a pooled connection for improved performance
-    pub async fn get_pooled_connection(&self, url: &str) -> Result<PooledConnection, TransportError> {
-        self.connection_pool.get_connection(url).await
-            .map_err(|e| TransportError::ConnectionFailed(format!("Failed to get pooled connection: {:?}", e)))
+    pub async fn get_pooled_connection(
+        &self,
+        url: &str,
+    ) -> Result<PooledConnection, TransportError> {
+        self.connection_pool.get_connection(url).await.map_err(|e| {
+            TransportError::ConnectionFailed(format!("Failed to get pooled connection: {:?}", e))
+        })
     }
 
     /// Return a connection to the pool
@@ -47,14 +51,17 @@ impl PerformanceMiddleware {
 
     /// Add message to batch for improved throughput
     pub async fn batch_message(&self, message: Message) -> Result<(), TransportError> {
-        self.message_batcher.add_message(message.data).await
+        self.message_batcher
+            .add_message(message.data)
+            .await
             .map_err(|e| TransportError::SendFailed(format!("Failed to batch message: {:?}", e)))
     }
 
     /// Flush batched messages
     pub async fn flush_batch(&self) -> Vec<Message> {
         let batched_data = self.message_batcher.flush_messages().await;
-        batched_data.into_iter()
+        batched_data
+            .into_iter()
             .map(|data| Message {
                 data,
                 message_type: crate::transport::MessageType::Text,
@@ -87,23 +94,28 @@ impl PerformanceMiddleware {
     /// Get performance metrics
     pub async fn get_performance_metrics(&self) -> crate::performance::PerformanceMetrics {
         let manager = self.performance_manager.lock().await;
-        manager.get_metrics().unwrap_or_else(|| crate::performance::PerformanceMetrics {
-            uptime: std::time::Duration::from_secs(0),
-            total_requests: 0,
-            requests_per_second: 0.0,
-            average_response_time: std::time::Duration::from_millis(0),
-            memory_usage: 0,
-            cpu_usage: 0.0,
-            active_connections: 0,
-            message_throughput: 0.0,
-            total_operations: 0,
-            average_operation_time: std::time::Duration::from_millis(0),
-            network_throughput: 0.0,
-        })
+        manager
+            .get_metrics()
+            .unwrap_or_else(|| crate::performance::PerformanceMetrics {
+                uptime: std::time::Duration::from_secs(0),
+                total_requests: 0,
+                requests_per_second: 0.0,
+                average_response_time: std::time::Duration::from_millis(0),
+                memory_usage: 0,
+                cpu_usage: 0.0,
+                active_connections: 0,
+                message_throughput: 0.0,
+                total_operations: 0,
+                average_operation_time: std::time::Duration::from_millis(0),
+                network_throughput: 0.0,
+            })
     }
 
     /// Optimize connection for performance
-    pub async fn optimize_connection(&self, connection: &mut PooledConnection) -> Result<(), TransportError> {
+    pub async fn optimize_connection(
+        &self,
+        connection: &mut PooledConnection,
+    ) -> Result<(), TransportError> {
         // Mark connection as used
         connection.mark_used();
 

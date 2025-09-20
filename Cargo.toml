@@ -1,7 +1,8 @@
 [package]
 name = "leptos-ws-pro"
 version = "0.11.0"
-edition = "2024"
+edition = "2021"
+rust-version = "1.75"
 license = "MIT"
 authors = ["Cloud Shuttle Team"]
 description = "🚀 Production-ready WebSocket library for Leptos with multi-transport support, enterprise security, high performance, and reactive integration. All core functionality implemented and tested!"

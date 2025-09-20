@@ -2,9 +2,9 @@
 //!
 //! Trait definitions for server signal functionality
 
-use std::any::Any;
 use async_trait::async_trait;
 use serde_json::Value;
+use std::any::Any;
 
 use crate::error::Error;
 use crate::messages::ServerSignalUpdate;

@@ -5,8 +5,8 @@
 
 use futures::{SinkExt, StreamExt};
 use leptos_ws_pro::transport::{
-    ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError,
-    adaptive::AdaptiveTransport,
+    adaptive::AdaptiveTransport, ConnectionState, Message, MessageType, Transport, TransportConfig,
+    TransportError,
 };
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -29,8 +29,8 @@ async fn start_test_server() -> (TcpListener, u16) {
 
 /// Run an echo server for testing
 async fn run_echo_server(listener: TcpListener) {
+    use futures::{SinkExt, StreamExt};
     use tokio_tungstenite::accept_async;
-    use futures::{StreamExt, SinkExt};
 
     while let Ok((stream, _)) = listener.accept().await {
         let ws_stream = accept_async(stream).await.unwrap();
@@ -94,8 +94,9 @@ async fn test_adaptive_transport_fallback_mechanism() {
     // When: Trying to connect with fallback
     let result = timeout(
         Duration::from_secs(10),
-        transport.connect_with_fallback("ws://127.0.0.1:99999")
-    ).await;
+        transport.connect_with_fallback("ws://127.0.0.1:99999"),
+    )
+    .await;
 
     // Then: Should attempt fallback mechanisms
     assert!(result.is_ok()); // Timeout completed
@@ -115,7 +116,10 @@ async fn test_adaptive_transport_message_sending() {
         ..Default::default()
     };
     let mut transport = AdaptiveTransport::new(config).await.unwrap();
-    transport.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    transport
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Sending a message
     let message = Message {
@@ -145,7 +149,11 @@ async fn test_adaptive_transport_connection_timeout() {
     let mut transport = AdaptiveTransport::new(config).await.unwrap();
 
     // When: Trying to connect to non-existent server
-    let result = timeout(Duration::from_secs(5), transport.connect("ws://127.0.0.1:99999")).await;
+    let result = timeout(
+        Duration::from_secs(5),
+        transport.connect("ws://127.0.0.1:99999"),
+    )
+    .await;
 
     // Then: Should fail with connection error
     assert!(result.is_ok()); // Timeout completed
@@ -169,7 +177,10 @@ async fn test_adaptive_transport_disconnect() {
         ..Default::default()
     };
     let mut transport = AdaptiveTransport::new(config).await.unwrap();
-    transport.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    transport
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     assert_eq!(transport.state(), ConnectionState::Connected);
 
     // When: Disconnecting
@@ -193,7 +204,10 @@ async fn test_adaptive_transport_reconnection() {
     let mut transport = AdaptiveTransport::new(config).await.unwrap();
 
     // First connection
-    transport.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    transport
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     assert_eq!(transport.state(), ConnectionState::Connected);
 
     // Disconnect
@@ -219,7 +233,10 @@ async fn test_adaptive_transport_serialized_message() {
         ..Default::default()
     };
     let mut transport = AdaptiveTransport::new(config).await.unwrap();
-    transport.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    transport
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Sending a serialized message
     let test_msg = TestMessage {
@@ -262,7 +279,10 @@ async fn test_adaptive_transport_multiple_messages() {
         ..Default::default()
     };
     let mut transport = AdaptiveTransport::new(config).await.unwrap();
-    transport.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    transport
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Sending multiple messages
     let (mut stream, mut sink) = transport.split();
@@ -307,7 +327,10 @@ async fn test_adaptive_transport_performance_monitoring() {
         ..Default::default()
     };
     let mut transport = AdaptiveTransport::new(config).await.unwrap();
-    transport.connect(&format!("ws://127.0.0.1:{}", port)).await.unwrap();
+    transport
+        .connect(&format!("ws://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Monitoring performance
     let metrics = transport.get_performance_metrics();

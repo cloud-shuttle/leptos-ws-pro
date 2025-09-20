@@ -46,7 +46,10 @@ fn test_message_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &valid_message);
-    assert!(result.is_ok(), "Valid message should pass schema validation");
+    assert!(
+        result.is_ok(),
+        "Valid message should pass schema validation"
+    );
 
     // Test invalid message (missing required field)
     let invalid_message = json!({
@@ -56,7 +59,10 @@ fn test_message_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &invalid_message);
-    assert!(result.is_err(), "Invalid message should fail schema validation");
+    assert!(
+        result.is_err(),
+        "Invalid message should fail schema validation"
+    );
 
     // Test invalid message type
     let invalid_type_message = json!({
@@ -66,7 +72,10 @@ fn test_message_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &invalid_type_message);
-    assert!(result.is_err(), "Invalid message type should fail schema validation");
+    assert!(
+        result.is_err(),
+        "Invalid message type should fail schema validation"
+    );
 }
 
 #[test]
@@ -86,7 +95,10 @@ fn test_rpc_request_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &valid_request);
-    assert!(result.is_ok(), "Valid RPC request should pass schema validation");
+    assert!(
+        result.is_ok(),
+        "Valid RPC request should pass schema validation"
+    );
 
     // Test invalid RPC request (missing required field)
     let invalid_request = json!({
@@ -96,7 +108,10 @@ fn test_rpc_request_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &invalid_request);
-    assert!(result.is_err(), "Invalid RPC request should fail schema validation");
+    assert!(
+        result.is_err(),
+        "Invalid RPC request should fail schema validation"
+    );
 
     // Test invalid method
     let invalid_method_request = json!({
@@ -106,7 +121,10 @@ fn test_rpc_request_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &invalid_method_request);
-    assert!(result.is_err(), "Invalid RPC method should fail schema validation");
+    assert!(
+        result.is_err(),
+        "Invalid RPC method should fail schema validation"
+    );
 }
 
 #[test]
@@ -124,7 +142,10 @@ fn test_rpc_response_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &valid_success_response);
-    assert!(result.is_ok(), "Valid success response should pass schema validation");
+    assert!(
+        result.is_ok(),
+        "Valid success response should pass schema validation"
+    );
 
     // Test valid error response
     let valid_error_response = json!({
@@ -139,7 +160,10 @@ fn test_rpc_response_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &valid_error_response);
-    assert!(result.is_ok(), "Valid error response should pass schema validation");
+    assert!(
+        result.is_ok(),
+        "Valid error response should pass schema validation"
+    );
 
     // Test invalid response (missing id)
     let invalid_response = json!({
@@ -149,7 +173,10 @@ fn test_rpc_response_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &invalid_response);
-    assert!(result.is_err(), "Invalid response should fail schema validation");
+    assert!(
+        result.is_err(),
+        "Invalid response should fail schema validation"
+    );
 }
 
 #[test]
@@ -168,7 +195,10 @@ fn test_transport_config_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &valid_config);
-    assert!(result.is_ok(), "Valid transport config should pass schema validation");
+    assert!(
+        result.is_ok(),
+        "Valid transport config should pass schema validation"
+    );
 
     // Test minimal valid config
     let minimal_config = json!({
@@ -176,7 +206,10 @@ fn test_transport_config_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &minimal_config);
-    assert!(result.is_ok(), "Minimal transport config should pass schema validation");
+    assert!(
+        result.is_ok(),
+        "Minimal transport config should pass schema validation"
+    );
 
     // Test invalid config (missing required url)
     let invalid_config = json!({
@@ -185,7 +218,10 @@ fn test_transport_config_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &invalid_config);
-    assert!(result.is_err(), "Invalid transport config should fail schema validation");
+    assert!(
+        result.is_err(),
+        "Invalid transport config should fail schema validation"
+    );
 
     // Test invalid protocol
     let invalid_protocol_config = json!({
@@ -194,7 +230,10 @@ fn test_transport_config_schema_validation() {
     });
 
     let result = validate_against_schema(&schema, &invalid_protocol_config);
-    assert!(result.is_err(), "Invalid protocol should fail schema validation");
+    assert!(
+        result.is_err(),
+        "Invalid protocol should fail schema validation"
+    );
 }
 
 #[test]
@@ -243,7 +282,9 @@ fn test_schema_files_are_valid_json_schema() {
     ];
 
     for schema_file in &schema_files {
-        let _schema = load_schema(schema_file)
-            .expect(&format!("Schema file {} should be valid JSON Schema", schema_file));
+        let _schema = load_schema(schema_file).expect(&format!(
+            "Schema file {} should be valid JSON Schema",
+            schema_file
+        ));
     }
 }

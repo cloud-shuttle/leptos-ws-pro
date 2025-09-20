@@ -2,18 +2,18 @@
 //!
 //! High-performance transport wrapper that integrates security and performance optimizations
 
-use crate::transport::{Transport, Message, TransportError, ConnectionState};
-use crate::security::{SecurityMiddleware, SecurityManager, SecurityConfig};
 use crate::performance::{
-    PerformanceMiddleware, ConnectionPool, MessageBatcher, MessageCache, PerformanceManager,
-    ConnectionPoolConfig, PerformanceConfig,
+    ConnectionPool, ConnectionPoolConfig, MessageBatcher, MessageCache, PerformanceConfig,
+    PerformanceManager, PerformanceMiddleware,
 };
+use crate::security::{SecurityConfig, SecurityManager, SecurityMiddleware};
+use crate::transport::{ConnectionState, Message, Transport, TransportError};
 use async_trait::async_trait;
 use futures::{Sink, SinkExt, Stream, StreamExt};
 use std::pin::Pin;
 use std::sync::Arc;
-use tokio::sync::{Mutex, mpsc};
 use std::task::{Context, Poll};
+use tokio::sync::{mpsc, Mutex};
 
 /// Optimized transport that combines security and performance features
 pub struct OptimizedTransport<T: Transport> {
@@ -31,10 +31,7 @@ pub struct OptimizedTransport<T: Transport> {
 }
 
 impl<T: Transport> OptimizedTransport<T> {
-    pub async fn new(
-        transport: T,
-        client_id: String,
-    ) -> Result<Self, TransportError> {
+    pub async fn new(transport: T, client_id: String) -> Result<Self, TransportError> {
         // Initialize security
         let security_config = SecurityConfig::default();
         let security_manager = SecurityManager::new(security_config);
@@ -42,8 +39,14 @@ impl<T: Transport> OptimizedTransport<T> {
 
         // Initialize performance components
         let connection_pool_config = ConnectionPoolConfig::default();
-        let connection_pool = ConnectionPool::new(connection_pool_config).await
-            .map_err(|e| TransportError::ConnectionFailed(format!("Failed to create connection pool: {:?}", e)))?;
+        let connection_pool = ConnectionPool::new(connection_pool_config)
+            .await
+            .map_err(|e| {
+                TransportError::ConnectionFailed(format!(
+                    "Failed to create connection pool: {:?}",
+                    e
+                ))
+            })?;
 
         let message_batcher = MessageBatcher::new(100, std::time::Duration::from_millis(10));
         let message_cache = MessageCache::new(1000, std::time::Duration::from_secs(300));
@@ -81,9 +84,7 @@ impl<T: Transport> OptimizedTransport<T> {
             .await?;
 
         // Performance optimization - batch the message
-        self.performance_middleware
-            .batch_message(message)
-            .await?;
+        self.performance_middleware.batch_message(message).await?;
 
         // Flush batch if needed
         if self.performance_middleware.should_flush_batch().await {
@@ -105,7 +106,13 @@ impl<T: Transport> OptimizedTransport<T> {
             .await?;
 
         // Cache the message for future retrieval
-        let cache_key = format!("msg_{}", std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs());
+        let cache_key = format!(
+            "msg_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+        );
         self.performance_middleware
             .cache_message(cache_key, message.clone())
             .await;
@@ -123,7 +130,7 @@ impl<T: Transport> OptimizedTransport<T> {
         SecurityStatus {
             client_id: self.client_id.clone(),
             rate_limited: false, // Would check actual rate limit status
-            authenticated: true,  // Would check actual auth status
+            authenticated: true, // Would check actual auth status
         }
     }
 }
@@ -171,8 +178,9 @@ impl Sink<Message> for OptimizedSink {
     }
 
     fn start_send(mut self: Pin<&mut Self>, item: Message) -> Result<(), Self::Error> {
-        self.sender.send(item)
-            .map_err(|_| TransportError::SendFailed("Failed to send message to middleware".to_string()))
+        self.sender.send(item).map_err(|_| {
+            TransportError::SendFailed("Failed to send message to middleware".to_string())
+        })
     }
 
     fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
@@ -236,7 +244,11 @@ impl<T: Transport> Transport for OptimizedTransport<T> {
             .await?;
 
         // Performance optimization - try to batch the message
-        if let Err(_) = self.performance_middleware.batch_message(message.clone()).await {
+        if let Err(_) = self
+            .performance_middleware
+            .batch_message(message.clone())
+            .await
+        {
             // If batching fails, send immediately
             let mut transport = self.inner_transport.lock().await;
             transport.send_message(message).await?;
@@ -264,10 +276,13 @@ impl<T: Transport> Transport for OptimizedTransport<T> {
             .await?;
 
         // Cache the message for future retrieval
-        let cache_key = format!("msg_{}", std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs());
+        let cache_key = format!(
+            "msg_{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs()
+        );
         self.performance_middleware
             .cache_message(cache_key, message.clone())
             .await;

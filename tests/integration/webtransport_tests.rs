@@ -1,7 +1,8 @@
 use leptos_ws_pro::{
-    transport::webtransport::{WebTransportConnection, config::StreamConfig},
+    transport::webtransport::{config::StreamConfig, WebTransportConnection},
     transport::{
-        ConnectionState, Transport, TransportCapabilities, TransportConfig, TransportError, Message, MessageType,
+        ConnectionState, Message, MessageType, Transport, TransportCapabilities, TransportConfig,
+        TransportError,
     },
 };
 use serde::{Deserialize, Serialize};

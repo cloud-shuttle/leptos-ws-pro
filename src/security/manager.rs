@@ -2,12 +2,12 @@
 //!
 //! Central security management and request validation
 
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
 use crate::error_handling::ThreatLevel;
+use crate::security::authenticator::{Authenticator, ThreatDetector};
 use crate::security::rate_limiter::RateLimiter;
 use crate::security::validator::InputValidator;
-use crate::security::authenticator::{Authenticator, ThreatDetector};
+use std::collections::HashMap;
+use std::time::{Duration, SystemTime};
 use thiserror::Error;
 
 /// Security configuration
@@ -35,7 +35,7 @@ impl Default for SecurityConfig {
             jwt_secret: None,
             rate_limit_requests_per_minute: 60,
             rate_limit_burst_capacity: 10,
-            max_message_size: 1024 * 1024, // 1MB
+            max_message_size: 1024 * 1024,          // 1MB
             allowed_origins: vec!["*".to_string()], // Should be configured properly
             require_tls: true,
         }
@@ -174,7 +174,10 @@ pub enum SecurityError {
     InvalidInput { reason: String },
 
     #[error("Unauthorized origin: {origin}, allowed: {allowed:?}")]
-    UnauthorizedOrigin { origin: String, allowed: Vec<String> },
+    UnauthorizedOrigin {
+        origin: String,
+        allowed: Vec<String>,
+    },
 
     #[error("Missing origin header")]
     MissingOrigin,
@@ -183,7 +186,10 @@ pub enum SecurityError {
     InvalidSession,
 
     #[error("Threat detected (level: {level:?}): {description}")]
-    ThreatDetected { level: ThreatLevel, description: String },
+    ThreatDetected {
+        level: ThreatLevel,
+        description: String,
+    },
 
     #[error("CSRF token validation failed")]
     CsrfValidationFailed,

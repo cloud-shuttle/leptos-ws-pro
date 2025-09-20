@@ -5,8 +5,7 @@
 
 use futures::StreamExt;
 use leptos_ws_pro::transport::{
-    ConnectionState, MessageType, Transport, TransportConfig, TransportError,
-    sse::SseConnection,
+    sse::SseConnection, ConnectionState, MessageType, Transport, TransportConfig, TransportError,
 };
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
@@ -67,7 +66,10 @@ async fn test_sse_event_receiving() {
         ..Default::default()
     };
     let mut client = SseConnection::new(config).await.unwrap();
-    client.connect(&format!("http://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("http://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Server sends an event
     let (mut stream, _sink) = client.split();
@@ -90,7 +92,10 @@ async fn test_sse_event_parsing() {
         ..Default::default()
     };
     let mut client = SseConnection::new(config).await.unwrap();
-    client.connect(&format!("http://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("http://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Server sends a properly formatted SSE event
     let (mut stream, _sink) = client.split();
@@ -118,7 +123,11 @@ async fn test_sse_connection_timeout() {
     let mut client = SseConnection::new(config).await.unwrap();
 
     // When: Client tries to connect to non-existent server
-    let result = timeout(Duration::from_secs(5), client.connect("http://127.0.0.1:99999")).await;
+    let result = timeout(
+        Duration::from_secs(5),
+        client.connect("http://127.0.0.1:99999"),
+    )
+    .await;
 
     // Then: Should fail with connection error
     assert!(result.is_ok()); // Timeout completed
@@ -142,7 +151,10 @@ async fn test_sse_disconnect() {
         ..Default::default()
     };
     let mut client = SseConnection::new(config).await.unwrap();
-    client.connect(&format!("http://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("http://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     assert_eq!(client.state(), ConnectionState::Connected);
 
     // When: Client disconnects
@@ -166,7 +178,10 @@ async fn test_sse_reconnection() {
     let mut client = SseConnection::new(config).await.unwrap();
 
     // First connection
-    client.connect(&format!("http://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("http://127.0.0.1:{}", port))
+        .await
+        .unwrap();
     assert_eq!(client.state(), ConnectionState::Connected);
 
     // Disconnect
@@ -192,7 +207,10 @@ async fn test_sse_serialized_message() {
         ..Default::default()
     };
     let mut client = SseConnection::new(config).await.unwrap();
-    client.connect(&format!("http://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("http://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Server sends a serialized message
     let (mut stream, _sink) = client.split();
@@ -222,7 +240,10 @@ async fn test_sse_multiple_events() {
         ..Default::default()
     };
     let mut client = SseConnection::new(config).await.unwrap();
-    client.connect(&format!("http://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("http://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Server sends multiple events
     let (mut stream, _sink) = client.split();
@@ -250,7 +271,10 @@ async fn test_sse_event_id_handling() {
         ..Default::default()
     };
     let mut client = SseConnection::new(config).await.unwrap();
-    client.connect(&format!("http://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("http://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Server sends events with IDs
     let (mut stream, _sink) = client.split();
@@ -277,7 +301,10 @@ async fn test_sse_retry_interval_handling() {
         ..Default::default()
     };
     let mut client = SseConnection::new(config).await.unwrap();
-    client.connect(&format!("http://127.0.0.1:{}", port)).await.unwrap();
+    client
+        .connect(&format!("http://127.0.0.1:{}", port))
+        .await
+        .unwrap();
 
     // When: Server sends retry interval
     let (mut stream, _sink) = client.split();

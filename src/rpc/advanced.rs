@@ -4,7 +4,6 @@
 //! type-safe method definitions, and async method support.
 
 #[cfg(feature = "advanced-rpc")]
-
 use crate::transport::{Message, MessageType};
 use crate::transport::{Transport, TransportError};
 use serde::{Deserialize, Serialize};
@@ -63,7 +62,10 @@ impl RpcCorrelationManager {
     }
 
     /// Register a pending request
-    pub fn register_request(&self, request_id: String) -> oneshot::Receiver<Result<RpcResponse, RpcError>> {
+    pub fn register_request(
+        &self,
+        request_id: String,
+    ) -> oneshot::Receiver<Result<RpcResponse, RpcError>> {
         let (response_tx, response_rx) = oneshot::channel();
         let timeout = Instant::now() + self.timeout_duration;
 
@@ -72,7 +74,10 @@ impl RpcCorrelationManager {
             timeout,
         };
 
-        self.pending_requests.lock().unwrap().insert(request_id, pending_request);
+        self.pending_requests
+            .lock()
+            .unwrap()
+            .insert(request_id, pending_request);
         response_rx
     }
 
@@ -85,10 +90,16 @@ impl RpcCorrelationManager {
                 let _ = pending_request.response_tx.send(Ok(response));
                 Ok(())
             } else {
-                Err(RpcError::Timeout(format!("Request {} timed out", response.id)))
+                Err(RpcError::Timeout(format!(
+                    "Request {} timed out",
+                    response.id
+                )))
             }
         } else {
-            Err(RpcError::InternalError(format!("No pending request found for ID: {}", response.id)))
+            Err(RpcError::InternalError(format!(
+                "No pending request found for ID: {}",
+                response.id
+            )))
         }
     }
 
@@ -105,7 +116,9 @@ impl RpcCorrelationManager {
 
         for id in expired_ids {
             if let Some(pending_request) = pending.remove(&id) {
-                let _ = pending_request.response_tx.send(Err(RpcError::Timeout("Request expired".to_string())));
+                let _ = pending_request
+                    .response_tx
+                    .send(Err(RpcError::Timeout("Request expired".to_string())));
             }
         }
     }
@@ -160,7 +173,11 @@ impl<T: Transport> BidirectionalRpcClient<T> {
     }
 
     /// Make an RPC call
-    pub async fn call(&self, method: &str, params: serde_json::Value) -> Result<serde_json::Value, RpcError> {
+    pub async fn call(
+        &self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, RpcError> {
         let request_id = Uuid::new_v4().to_string();
         let request = RpcRequest {
             id: request_id.clone(),
@@ -172,7 +189,9 @@ impl<T: Transport> BidirectionalRpcClient<T> {
         let response_rx = self.correlation_manager.register_request(request_id);
 
         // Send request
-        self.request_sender.send(request).map_err(|_| RpcError::ConnectionFailed("Failed to send request".to_string()))?;
+        self.request_sender
+            .send(request)
+            .map_err(|_| RpcError::ConnectionFailed("Failed to send request".to_string()))?;
 
         // Wait for response
         match response_rx.await {
@@ -186,12 +205,19 @@ impl<T: Transport> BidirectionalRpcClient<T> {
                 }
             }
             Ok(Err(e)) => Err(e),
-            Err(_) => Err(RpcError::ConnectionFailed("Response channel closed".to_string())),
+            Err(_) => Err(RpcError::ConnectionFailed(
+                "Response channel closed".to_string(),
+            )),
         }
     }
 
     /// Make an RPC call with timeout
-    pub async fn call_with_timeout(&self, method: &str, params: serde_json::Value, timeout: Duration) -> Result<serde_json::Value, RpcError> {
+    pub async fn call_with_timeout(
+        &self,
+        method: &str,
+        params: serde_json::Value,
+        timeout: Duration,
+    ) -> Result<serde_json::Value, RpcError> {
         let request_id = Uuid::new_v4().to_string();
         let request = RpcRequest {
             id: request_id.clone(),
@@ -203,7 +229,9 @@ impl<T: Transport> BidirectionalRpcClient<T> {
         let response_rx = self.correlation_manager.register_request(request_id);
 
         // Send request
-        self.request_sender.send(request).map_err(|_| RpcError::ConnectionFailed("Failed to send request".to_string()))?;
+        self.request_sender
+            .send(request)
+            .map_err(|_| RpcError::ConnectionFailed("Failed to send request".to_string()))?;
 
         // Wait for response with timeout
         match tokio::time::timeout(timeout, response_rx).await {
@@ -217,7 +245,9 @@ impl<T: Transport> BidirectionalRpcClient<T> {
                 }
             }
             Ok(Ok(Err(e))) => Err(e),
-            Ok(Err(_)) => Err(RpcError::ConnectionFailed("Response channel closed".to_string())),
+            Ok(Err(_)) => Err(RpcError::ConnectionFailed(
+                "Response channel closed".to_string(),
+            )),
             Err(_) => Err(RpcError::Timeout("Request timed out".to_string())),
         }
     }
@@ -236,7 +266,10 @@ impl<T: Transport> BidirectionalRpcClient<T> {
 /// RPC Method Registry
 /// Manages type-safe method definitions
 pub struct RpcMethodRegistry {
-    methods: HashMap<String, Box<dyn Fn(serde_json::Value) -> Result<serde_json::Value, RpcError> + Send + Sync>>,
+    methods: HashMap<
+        String,
+        Box<dyn Fn(serde_json::Value) -> Result<serde_json::Value, RpcError> + Send + Sync>,
+    >,
 }
 
 impl RpcMethodRegistry {
@@ -255,11 +288,18 @@ impl RpcMethodRegistry {
     }
 
     /// Call a registered method
-    pub fn call(&self, method: &str, params: serde_json::Value) -> Result<serde_json::Value, RpcError> {
+    pub fn call(
+        &self,
+        method: &str,
+        params: serde_json::Value,
+    ) -> Result<serde_json::Value, RpcError> {
         if let Some(handler) = self.methods.get(method) {
             handler(params)
         } else {
-            Err(RpcError::MethodNotFound(format!("Method '{}' not found", method)))
+            Err(RpcError::MethodNotFound(format!(
+                "Method '{}' not found",
+                method
+            )))
         }
     }
 
@@ -293,7 +333,10 @@ impl<T: Transport> BatchRpcClient<T> {
     }
 
     /// Make multiple RPC calls in batch
-    pub async fn call_batch(&self, requests: Vec<(String, serde_json::Value)>) -> Result<Vec<serde_json::Value>, RpcError> {
+    pub async fn call_batch(
+        &self,
+        requests: Vec<(String, serde_json::Value)>,
+    ) -> Result<Vec<serde_json::Value>, RpcError> {
         let mut results = Vec::new();
 
         for (method, params) in requests {
@@ -340,9 +383,7 @@ mod tests {
         let mut registry = RpcMethodRegistry::new();
 
         // Register a method
-        registry.register("echo", |params| {
-            Ok(params)
-        });
+        registry.register("echo", |params| Ok(params));
 
         // Call the method
         let result = registry.call("echo", serde_json::json!({"message": "hello"}));
@@ -353,7 +394,7 @@ mod tests {
         let result = registry.call("nonexistent", serde_json::json!({}));
         assert!(result.is_err());
         match result.unwrap_err() {
-            RpcError::MethodNotFound(_) => {},
+            RpcError::MethodNotFound(_) => {}
             _ => panic!("Expected MethodNotFound error"),
         }
     }
@@ -362,10 +403,14 @@ mod tests {
     async fn test_bidirectional_rpc_client() {
         let config = TransportConfig::default();
         let transport = WebSocketConnection::new(config).await.unwrap();
-        let client = BidirectionalRpcClient::new(transport, Duration::from_secs(5)).await.unwrap();
+        let client = BidirectionalRpcClient::new(transport, Duration::from_secs(5))
+            .await
+            .unwrap();
 
         // Make an RPC call
-        let result = client.call("echo", serde_json::json!({"message": "hello"})).await;
+        let result = client
+            .call("echo", serde_json::json!({"message": "hello"}))
+            .await;
         assert!(result.is_ok());
         let value = result.unwrap();
         assert_eq!(value["echo"]["message"], "hello");
@@ -376,7 +421,9 @@ mod tests {
     async fn test_batch_rpc_client() {
         let config = TransportConfig::default();
         let transport = WebSocketConnection::new(config).await.unwrap();
-        let client = BatchRpcClient::new(transport, Duration::from_secs(5)).await.unwrap();
+        let client = BatchRpcClient::new(transport, Duration::from_secs(5))
+            .await
+            .unwrap();
 
         // Make batch RPC calls
         let requests = vec![

@@ -2,11 +2,11 @@
 //!
 //! Manages a pool of reusable WebSocket connections for improved performance
 
+use crate::performance::metrics::PerformanceError;
 use std::collections::{HashMap, VecDeque};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use crate::performance::metrics::PerformanceError;
 
 /// Connection pool configuration
 #[derive(Debug, Clone)]
@@ -52,7 +52,9 @@ impl ConnectionPool {
         for i in 0..config.min_connections {
             let url = format!("ws://localhost:8080/{}", i);
             let connection = PooledConnection::new(url);
-            pool.connections.write().await
+            pool.connections
+                .write()
+                .await
                 .entry(connection.url.clone())
                 .or_insert_with(VecDeque::new)
                 .push_back(connection);
@@ -84,7 +86,9 @@ impl ConnectionPool {
     pub async fn return_connection(&self, connection: PooledConnection) {
         if connection.is_healthy() {
             let mut connections = self.connections.write().await;
-            let pool = connections.entry(connection.url.clone()).or_insert_with(VecDeque::new);
+            let pool = connections
+                .entry(connection.url.clone())
+                .or_insert_with(VecDeque::new);
             pool.push_back(connection);
         } else {
             // Unhealthy connection, don't return to pool

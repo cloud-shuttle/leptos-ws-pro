@@ -4,8 +4,8 @@
 //! following TDD principles for v1.0 release.
 
 use leptos_ws_pro::rpc::{
-    ChatMessage, GetMessagesParams, RpcError, RpcMethod,
-    RpcRequest, RpcResponse, SendMessageParams, SubscribeMessagesParams,
+    ChatMessage, GetMessagesParams, RpcError, RpcMethod, RpcRequest, RpcResponse,
+    SendMessageParams, SubscribeMessagesParams,
 };
 use serde::{Deserialize, Serialize};
 
@@ -213,7 +213,10 @@ mod rpc_core_tests {
 
         let deserialized: RpcResponse<TestResult> = serde_json::from_str(&json).unwrap();
         assert!(deserialized.result.is_some());
-        assert_eq!(deserialized.result.as_ref().unwrap().data, "serialized_data");
+        assert_eq!(
+            deserialized.result.as_ref().unwrap().data,
+            "serialized_data"
+        );
     }
 
     #[test]

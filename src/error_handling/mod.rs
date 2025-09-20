@@ -2,11 +2,11 @@
 //!
 //! Comprehensive error handling, recovery strategies, and circuit breaker patterns
 
-pub mod types;
-pub mod recovery;
 pub mod circuit_breaker;
+pub mod recovery;
+pub mod types;
 
 // Re-export main types
-pub use types::{LeptosWsError, ErrorContext, ErrorType, ThreatLevel};
-pub use recovery::{ErrorRecoveryHandler, RecoveryStrategy, ErrorReporter};
 pub use circuit_breaker::CircuitBreaker;
+pub use recovery::{ErrorRecoveryHandler, ErrorReporter, RecoveryStrategy};
+pub use types::{ErrorContext, ErrorType, LeptosWsError, ThreatLevel};

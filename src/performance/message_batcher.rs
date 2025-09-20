@@ -2,11 +2,11 @@
 //!
 //! Batches messages for improved throughput and reduced network overhead
 
+use crate::performance::metrics::PerformanceError;
 use std::collections::VecDeque;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::Mutex;
-use crate::performance::metrics::PerformanceError;
 
 /// Message batcher for improving throughput
 pub struct MessageBatcher {
@@ -52,8 +52,7 @@ impl MessageBatcher {
         let pending = self.pending_messages.lock().await;
         let last_flush = self.last_flush.lock().await;
 
-        pending.len() >= self.batch_size ||
-        last_flush.elapsed() >= self.batch_timeout
+        pending.len() >= self.batch_size || last_flush.elapsed() >= self.batch_timeout
     }
 
     pub async fn pending_count(&self) -> usize {

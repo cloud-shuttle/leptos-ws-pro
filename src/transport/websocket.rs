@@ -9,7 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
 use tokio::net::TcpStream;
 use tokio::sync::mpsc;
-use tokio_tungstenite::{MaybeTlsStream, WebSocketStream, connect_async};
+use tokio_tungstenite::{connect_async, MaybeTlsStream, WebSocketStream};
 
 /// WebSocket connection implementation
 #[allow(dead_code)]
@@ -88,9 +88,7 @@ impl WebSocketConnection {
                         MessageType::Pong => {
                             tokio_tungstenite::tungstenite::Message::Pong(message.data.into())
                         }
-                        MessageType::Close => {
-                            tokio_tungstenite::tungstenite::Message::Close(None)
-                        }
+                        MessageType::Close => tokio_tungstenite::tungstenite::Message::Close(None),
                     };
 
                     if let Err(e) = write.send(ws_msg).await {
@@ -307,15 +305,20 @@ impl Transport for WebSocketConnection {
 
     async fn send_message(&self, message: &Message) -> Result<(), TransportError> {
         if self.state() != ConnectionState::Connected {
-            return Err(TransportError::ConnectionFailed("Not connected".to_string()));
+            return Err(TransportError::ConnectionFailed(
+                "Not connected".to_string(),
+            ));
         }
 
         // Send via the send channel to background task
         if let Some(sender) = &self.send_channel {
-            sender.send(message.clone())
-                .map_err(|_| TransportError::SendFailed("Failed to send message to background task".to_string()))
+            sender.send(message.clone()).map_err(|_| {
+                TransportError::SendFailed("Failed to send message to background task".to_string())
+            })
         } else {
-            Err(TransportError::SendFailed("No send channel available".to_string()))
+            Err(TransportError::SendFailed(
+                "No send channel available".to_string(),
+            ))
         }
     }
 
@@ -323,7 +326,9 @@ impl Transport for WebSocketConnection {
         // The receive_message method can't borrow mutably from &self
         // This is a limitation of the current Transport trait design
         // Users should use the split() method to get a stream for receiving messages
-        Err(TransportError::NotSupported("Use split() to get a stream for receiving messages".to_string()))
+        Err(TransportError::NotSupported(
+            "Use split() to get a stream for receiving messages".to_string(),
+        ))
     }
 
     async fn create_bidirectional_stream(&mut self) -> Result<(), TransportError> {

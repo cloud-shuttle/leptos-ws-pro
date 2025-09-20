@@ -10,8 +10,15 @@ use std::time::Duration;
 pub enum ReconnectionStrategy {
     None,
     Immediate,
-    ExponentialBackoff { base_delay: Duration, max_delay: Duration, max_attempts: u32 },
-    LinearBackoff { delay: Duration, max_attempts: u32 },
+    ExponentialBackoff {
+        base_delay: Duration,
+        max_delay: Duration,
+        max_attempts: u32,
+    },
+    LinearBackoff {
+        delay: Duration,
+        max_attempts: u32,
+    },
 }
 
 /// Heartbeat configuration

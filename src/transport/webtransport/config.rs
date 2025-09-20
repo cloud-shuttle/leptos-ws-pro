@@ -66,6 +66,10 @@ pub struct PerformanceMetrics {
     pub connection_count: u32,
     pub message_count: u64,
     pub error_count: u32,
+    pub connection_attempts: u64,
+    pub successful_connections: u64,
+    pub failed_connections: u64,
+    pub messages_sent: u64,
 }
 
 impl Default for PerformanceMetrics {
@@ -84,6 +88,10 @@ impl Default for PerformanceMetrics {
             connection_count: 0,
             message_count: 0,
             error_count: 0,
+            connection_attempts: 0,
+            successful_connections: 0,
+            failed_connections: 0,
+            messages_sent: 0,
         }
     }
 }

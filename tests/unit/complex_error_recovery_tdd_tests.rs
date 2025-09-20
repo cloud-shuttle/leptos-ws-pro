@@ -7,19 +7,19 @@
 //! - Error correlation and distributed tracing
 //! - Automatic failover and disaster recovery
 
-use leptos_ws_pro::error_handling::{
-    ErrorContext, ErrorRecoveryHandler, CircuitBreaker, ErrorReporter,
-    RecoveryStrategy, ThreatLevel, ErrorType
-};
-use leptos_ws_pro::error_handling::circuit_breaker::CircuitBreakerState;
-use leptos_ws_pro::transport::{TransportError, ConnectionState};
-use leptos_ws_pro::rpc::RpcError;
 use leptos_ws_pro::codec::CodecError;
+use leptos_ws_pro::error_handling::circuit_breaker::CircuitBreakerState;
+use leptos_ws_pro::error_handling::{
+    CircuitBreaker, ErrorContext, ErrorRecoveryHandler, ErrorReporter, ErrorType, RecoveryStrategy,
+    ThreatLevel,
+};
+use leptos_ws_pro::rpc::RpcError;
+use leptos_ws_pro::transport::{ConnectionState, TransportError};
 use serde::{Deserialize, Serialize};
-use std::time::{Duration, Instant};
 use std::collections::HashMap;
+use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
-use std::sync::atomic::{AtomicUsize, AtomicBool, Ordering};
+use std::time::{Duration, Instant};
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct RecoveryTestData {
@@ -71,7 +71,9 @@ mod circuit_breaker_tests {
         // When: Triggering failures up to threshold
         for _i in 0..5 {
             if breaker.allow_request() {
-                let result: Result<(), TransportError> = Err(TransportError::ConnectionFailed("Simulated failure".to_string()));
+                let result: Result<(), TransportError> = Err(TransportError::ConnectionFailed(
+                    "Simulated failure".to_string(),
+                ));
                 assert!(result.is_err(), "Call should have failed");
                 breaker.record_failure();
             }
@@ -80,7 +82,9 @@ mod circuit_breaker_tests {
 
         // Then: Circuit should open after threshold
         if breaker.allow_request() {
-            let result: Result<(), TransportError> = Err(TransportError::ConnectionFailed("Another failure".to_string()));
+            let result: Result<(), TransportError> = Err(TransportError::ConnectionFailed(
+                "Another failure".to_string(),
+            ));
             assert!(result.is_err());
             breaker.record_failure();
         }
@@ -92,7 +96,10 @@ mod circuit_breaker_tests {
         let elapsed = start_time.elapsed();
 
         assert!(!allowed, "Circuit should be open and not allow requests");
-        assert!(elapsed < Duration::from_millis(10), "Circuit breaker should fail fast");
+        assert!(
+            elapsed < Duration::from_millis(10),
+            "Circuit breaker should fail fast"
+        );
     }
 
     #[tokio::test]
@@ -109,9 +116,9 @@ mod circuit_breaker_tests {
 
         // Open the circuit
         for _ in 0..3 {
-            let _: Result<(), TransportError> = breaker.call(|| async {
-                Err(TransportError::ConnectionFailed("Failure".to_string()))
-            }).await;
+            let _: Result<(), TransportError> = breaker
+                .call(|| async { Err(TransportError::ConnectionFailed("Failure".to_string())) })
+                .await;
         }
         assert_eq!(breaker.state(), CircuitBreakerState::Open);
 
@@ -128,14 +135,16 @@ mod circuit_breaker_tests {
         for i in 0..5 {
             let success_count = success_count.clone();
             let task = tokio::spawn(async move {
-                let result = breaker.call(|| async {
-                    if i < 2 {
-                        success_count.fetch_add(1, Ordering::SeqCst);
-                        Ok(())
-                    } else {
-                        Err(TransportError::ConnectionFailed("Failure".to_string()))
-                    }
-                }).await;
+                let result = breaker
+                    .call(|| async {
+                        if i < 2 {
+                            success_count.fetch_add(1, Ordering::SeqCst);
+                            Ok(())
+                        } else {
+                            Err(TransportError::ConnectionFailed("Failure".to_string()))
+                        }
+                    })
+                    .await;
                 result
             });
             tasks.push(task);
@@ -164,9 +173,9 @@ mod circuit_breaker_tests {
 
         // Open the circuit
         for _ in 0..3 {
-            let _: Result<(), TransportError> = breaker.call(|| async {
-                Err(TransportError::ConnectionFailed("Failure".to_string()))
-            }).await;
+            let _: Result<(), TransportError> = breaker
+                .call(|| async { Err(TransportError::ConnectionFailed("Failure".to_string())) })
+                .await;
         }
 
         // Wait for recovery timeout
@@ -175,9 +184,7 @@ mod circuit_breaker_tests {
 
         // When: Making successful calls in half-open state
         for _ in 0..3 {
-            let result = breaker.call(|| async {
-                Ok(())
-            }).await;
+            let result = breaker.call(|| async { Ok(()) }).await;
             assert!(result.is_ok());
         }
 
@@ -185,9 +192,7 @@ mod circuit_breaker_tests {
         assert_eq!(breaker.state(), CircuitBreakerState::Closed);
 
         // And: Normal operation should resume
-        let result = breaker.call(|| async {
-            Ok(())
-        }).await;
+        let result = breaker.call(|| async { Ok(()) }).await;
         assert!(result.is_ok());
     }
 }
@@ -225,12 +230,20 @@ mod exponential_backoff_tests {
 
         // Then: Delays should increase exponentially
         for i in 1..delays.len() {
-            assert!(delays[i] >= delays[i-1], "Delay {} should be >= delay {}", i, i-1);
+            assert!(
+                delays[i] >= delays[i - 1],
+                "Delay {} should be >= delay {}",
+                i,
+                i - 1
+            );
         }
 
         // And: Should respect max delay
         for delay in &delays {
-            assert!(*delay <= Duration::from_secs(5), "Delay should not exceed max delay");
+            assert!(
+                *delay <= Duration::from_secs(5),
+                "Delay should not exceed max delay"
+            );
         }
     }
 
@@ -257,14 +270,20 @@ mod exponential_backoff_tests {
 
         // Then: Should have some variation due to jitter
         let unique_delays: std::collections::HashSet<_> = delays.iter().collect();
-        assert!(unique_delays.len() > 1, "Jitter should create variation in delays");
+        assert!(
+            unique_delays.len() > 1,
+            "Jitter should create variation in delays"
+        );
 
         // And: Should still follow exponential pattern
         let mut sorted_delays = delays.clone();
         sorted_delays.sort();
 
         for i in 1..sorted_delays.len() {
-            assert!(sorted_delays[i] >= sorted_delays[i-1], "Delays should generally increase");
+            assert!(
+                sorted_delays[i] >= sorted_delays[i - 1],
+                "Delays should generally increase"
+            );
         }
     }
 
@@ -315,7 +334,11 @@ mod graceful_degradation_tests {
         for i in 0..10 {
             let health = ServiceHealth {
                 service_id: service_id.clone(),
-                state: if i < 5 { ServiceState::Healthy } else { ServiceState::Degraded },
+                state: if i < 5 {
+                    ServiceState::Healthy
+                } else {
+                    ServiceState::Degraded
+                },
                 error_rate: (i as f64) * 0.1,
                 response_time: Duration::from_millis(100 + i * 10),
                 last_check: std::time::SystemTime::now()
@@ -354,10 +377,10 @@ mod graceful_degradation_tests {
             state: ServiceState::Degraded,
             error_rate: 0.7,
             response_time: Duration::from_millis(500),
-                last_check: std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs(),
+            last_check: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             consecutive_failures: 5,
         };
 
@@ -384,10 +407,10 @@ mod graceful_degradation_tests {
             state: ServiceState::Degraded,
             error_rate: 0.8,
             response_time: Duration::from_millis(1000),
-                last_check: std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs(),
+            last_check: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             consecutive_failures: 10,
         };
 
@@ -399,14 +422,16 @@ mod graceful_degradation_tests {
             state: ServiceState::Healthy,
             error_rate: 0.1,
             response_time: Duration::from_millis(100),
-                last_check: std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .unwrap()
-                    .as_secs(),
+            last_check: std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs(),
             consecutive_failures: 0,
         };
 
-        feature_manager.update_service_health(recovered_health).await;
+        feature_manager
+            .update_service_health(recovered_health)
+            .await;
 
         // Then: Should re-enable features gradually
         tokio::time::sleep(Duration::from_millis(100)).await;
@@ -498,7 +523,9 @@ mod error_correlation_tests {
         let correlated_errors = correlation_system.get_correlated_errors(&trace_id).await;
         assert_eq!(correlated_errors.len(), 3);
 
-        let correlation_errors = correlation_system.get_correlated_errors(&correlation_id).await;
+        let correlation_errors = correlation_system
+            .get_correlated_errors(&correlation_id)
+            .await;
         assert_eq!(correlation_errors.len(), 3);
 
         // And: Should identify error patterns
@@ -508,9 +535,15 @@ mod error_correlation_tests {
         let pattern = &patterns[0];
         assert_eq!(pattern.trace_id, trace_id);
         assert_eq!(pattern.error_count, 3);
-        assert!(pattern.affected_services.contains(&"websocket-service".to_string()));
-        assert!(pattern.affected_services.contains(&"rpc-service".to_string()));
-        assert!(pattern.affected_services.contains(&"codec-service".to_string()));
+        assert!(pattern
+            .affected_services
+            .contains(&"websocket-service".to_string()));
+        assert!(pattern
+            .affected_services
+            .contains(&"rpc-service".to_string()));
+        assert!(pattern
+            .affected_services
+            .contains(&"codec-service".to_string()));
     }
 
     #[tokio::test]
@@ -524,7 +557,10 @@ mod error_correlation_tests {
 
         let error_chain = vec![
             ErrorContext {
-                timestamp: base_time.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
+                timestamp: base_time
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs(),
                 operation: "load_balance".to_string(),
                 component: "load_balancer".to_string(),
                 connection_state: Some(ConnectionState::Disconnected),
@@ -539,7 +575,10 @@ mod error_correlation_tests {
                 metadata: Some(HashMap::new()),
             },
             ErrorContext {
-                timestamp: (base_time + Duration::from_millis(100)).duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
+                timestamp: (base_time + Duration::from_millis(100))
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs(),
                 operation: "api_call".to_string(),
                 component: "api_gateway".to_string(),
                 connection_state: Some(ConnectionState::Connected),
@@ -554,7 +593,10 @@ mod error_correlation_tests {
                 metadata: Some(HashMap::new()),
             },
             ErrorContext {
-                timestamp: (base_time + Duration::from_millis(200)).duration_since(std::time::UNIX_EPOCH).unwrap().as_secs(),
+                timestamp: (base_time + Duration::from_millis(200))
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .unwrap()
+                    .as_secs(),
                 operation: "decode_response".to_string(),
                 component: "client_app".to_string(),
                 connection_state: Some(ConnectionState::Connected),
@@ -604,7 +646,9 @@ mod failover_recovery_tests {
         let mut failover_system = FailoverSystem::new(endpoints);
 
         // When: Primary endpoint fails
-        failover_system.simulate_endpoint_failure("https://primary.example.com").await;
+        failover_system
+            .simulate_endpoint_failure("https://primary.example.com")
+            .await;
 
         // Then: Should automatically failover to secondary
         let active_endpoint = failover_system.get_active_endpoint().await;
@@ -614,7 +658,9 @@ mod failover_recovery_tests {
         assert!(failover_system.is_connected().await);
 
         // When: Secondary also fails
-        failover_system.simulate_endpoint_failure("https://secondary.example.com").await;
+        failover_system
+            .simulate_endpoint_failure("https://secondary.example.com")
+            .await;
 
         // Then: Should failover to tertiary
         let active_endpoint = failover_system.get_active_endpoint().await;
@@ -632,13 +678,19 @@ mod failover_recovery_tests {
         let mut failover_system = FailoverSystem::new(endpoints);
 
         // Fail both endpoints
-        failover_system.simulate_endpoint_failure("https://primary.example.com").await;
-        failover_system.simulate_endpoint_failure("https://secondary.example.com").await;
+        failover_system
+            .simulate_endpoint_failure("https://primary.example.com")
+            .await;
+        failover_system
+            .simulate_endpoint_failure("https://secondary.example.com")
+            .await;
 
         assert!(!failover_system.is_connected().await);
 
         // When: Primary endpoint recovers
-        failover_system.simulate_endpoint_recovery("https://primary.example.com").await;
+        failover_system
+            .simulate_endpoint_recovery("https://primary.example.com")
+            .await;
 
         // Then: Should automatically switch back to primary
         tokio::time::sleep(Duration::from_millis(100)).await;
@@ -670,7 +722,10 @@ mod failover_recovery_tests {
 
         // Then: Should activate recovery plan
         assert!(disaster_recovery.is_recovery_active().await);
-        assert_eq!(disaster_recovery.get_recovery_plan().await, "activate_backup_datacenter");
+        assert_eq!(
+            disaster_recovery.get_recovery_plan().await,
+            "activate_backup_datacenter"
+        );
 
         // And: Should notify affected services
         let notifications = disaster_recovery.get_notifications().await;
@@ -730,8 +785,9 @@ impl ExponentialBackoff {
         };
 
         self.current_delay = Duration::from_millis(
-            (self.current_delay.as_millis() as f64 * self.config.multiplier) as u64
-        ).min(self.config.max_delay);
+            (self.current_delay.as_millis() as f64 * self.config.multiplier) as u64,
+        )
+        .min(self.config.max_delay);
 
         self.retry_count += 1;
         delay
@@ -798,23 +854,23 @@ impl FeatureManager {
                 self.features.insert("advanced_rpc".to_string(), true);
                 self.features.insert("compression".to_string(), true);
                 self.features.insert("encryption".to_string(), true);
-            },
+            }
             ServiceState::Degraded => {
                 self.features.insert("advanced_rpc".to_string(), false);
                 self.features.insert("compression".to_string(), false);
                 self.features.insert("encryption".to_string(), true);
-            },
+            }
             ServiceState::Unhealthy | ServiceState::Failed => {
                 self.features.insert("advanced_rpc".to_string(), false);
                 self.features.insert("compression".to_string(), false);
                 self.features.insert("encryption".to_string(), false);
-            },
+            }
             ServiceState::Recovering => {
                 // Gradually re-enable features
                 tokio::time::sleep(Duration::from_millis(100)).await;
                 self.features.insert("compression".to_string(), true);
                 self.features.insert("advanced_rpc".to_string(), true);
-            },
+            }
         }
     }
 }
@@ -845,7 +901,8 @@ impl ErrorCorrelationSystem {
     }
 
     async fn get_correlated_errors(&self, id: &str) -> Vec<&ErrorContext> {
-        self.errors.iter()
+        self.errors
+            .iter()
             .filter(|e| e.trace_id == id || e.correlation_id == id)
             .collect()
     }
@@ -855,12 +912,16 @@ impl ErrorCorrelationSystem {
         let mut trace_groups: HashMap<String, Vec<&ErrorContext>> = HashMap::new();
 
         for error in &self.errors {
-            trace_groups.entry(error.trace_id.clone()).or_default().push(error);
+            trace_groups
+                .entry(error.trace_id.clone())
+                .or_default()
+                .push(error);
         }
 
         for (trace_id, errors) in trace_groups {
             if errors.len() > 1 {
-                let affected_services: Vec<String> = errors.iter()
+                let affected_services: Vec<String> = errors
+                    .iter()
                     .map(|e| e.service.clone())
                     .collect::<std::collections::HashSet<_>>()
                     .into_iter()
@@ -880,7 +941,9 @@ impl ErrorCorrelationSystem {
     }
 
     async fn identify_root_cause(&self, trace_id: &str) -> Option<&ErrorContext> {
-        let errors: Vec<&ErrorContext> = self.errors.iter()
+        let errors: Vec<&ErrorContext> = self
+            .errors
+            .iter()
             .filter(|e| e.trace_id == trace_id)
             .collect();
 
@@ -913,7 +976,9 @@ impl FailoverSystem {
     }
 
     async fn is_connected(&self) -> bool {
-        !self.failed_endpoints.contains(&self.endpoints[self.active_endpoint])
+        !self
+            .failed_endpoints
+            .contains(&self.endpoints[self.active_endpoint])
     }
 
     async fn simulate_endpoint_failure(&mut self, endpoint: &str) {
@@ -978,7 +1043,8 @@ impl DisasterRecoverySystem {
 
         // Notify affected services
         for service in &event.affected_services {
-            self.notifications.push(format!("Disaster recovery activated for {}", service));
+            self.notifications
+                .push(format!("Disaster recovery activated for {}", service));
         }
 
         // Set recovery status

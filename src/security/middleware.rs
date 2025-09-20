@@ -2,7 +2,7 @@
 //!
 //! Middleware for integrating security features with transport layer
 
-use crate::security::manager::{SecurityManager, SecurityRequest, SecurityError};
+use crate::security::manager::{SecurityError, SecurityManager, SecurityRequest};
 use crate::transport::{Message, TransportError};
 use std::sync::Arc;
 use tokio::sync::Mutex;
@@ -37,8 +37,9 @@ impl SecurityMiddleware {
         };
 
         let mut manager = self.security_manager.lock().await;
-        manager.validate_request(&security_request)
-            .map_err(|e| TransportError::ProtocolError(format!("Security validation failed: {}", e)))
+        manager.validate_request(&security_request).map_err(|e| {
+            TransportError::ProtocolError(format!("Security validation failed: {}", e))
+        })
     }
 
     /// Validate outgoing message for security compliance
@@ -59,8 +60,9 @@ impl SecurityMiddleware {
         };
 
         let mut manager = self.security_manager.lock().await;
-        manager.validate_request(&security_request)
-            .map_err(|e| TransportError::ProtocolError(format!("Security validation failed: {}", e)))
+        manager.validate_request(&security_request).map_err(|e| {
+            TransportError::ProtocolError(format!("Security validation failed: {}", e))
+        })
     }
 
     /// Check if client is rate limited
@@ -76,7 +78,8 @@ impl SecurityMiddleware {
         };
 
         let mut manager = self.security_manager.lock().await;
-        manager.validate_request(&security_request)
+        manager
+            .validate_request(&security_request)
             .map_err(|e| match e {
                 SecurityError::RateLimitExceeded { .. } => TransportError::RateLimited,
                 _ => TransportError::ProtocolError(format!("Security check failed: {}", e)),
@@ -92,7 +95,8 @@ impl SecurityMiddleware {
     /// Validate session token
     pub async fn validate_session_token(&self, token: &str) -> Result<(), TransportError> {
         let manager = self.security_manager.lock().await;
-        manager.validate_session_token(token)
+        manager
+            .validate_session_token(token)
             .map_err(|_| TransportError::AuthFailed("Invalid session token".to_string()))
             .map(|_| ())
     }

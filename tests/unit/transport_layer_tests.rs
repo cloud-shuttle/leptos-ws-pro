@@ -5,8 +5,8 @@
 
 use futures::{SinkExt, StreamExt};
 use leptos_ws_pro::transport::{
-    MessageType, TransportCapabilities, adaptive::AdaptiveTransport, sse::SseConnection,
-    websocket::WebSocketConnection, webtransport::WebTransportConnection,
+    adaptive::AdaptiveTransport, sse::SseConnection, websocket::WebSocketConnection,
+    webtransport::WebTransportConnection, MessageType, TransportCapabilities,
 };
 use leptos_ws_pro::*;
 use serde::{Deserialize, Serialize};

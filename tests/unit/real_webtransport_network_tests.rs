@@ -4,8 +4,8 @@
 //! using HTTP/2 or HTTP/1.1 as fallback for WebTransport protocol.
 
 use leptos_ws_pro::transport::{
-    ConnectionState, Transport, TransportConfig, TransportError,
-    webtransport::WebTransportConnection,
+    webtransport::WebTransportConnection, ConnectionState, Transport, TransportConfig,
+    TransportError,
 };
 
 #[tokio::test]

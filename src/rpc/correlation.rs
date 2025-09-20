@@ -3,11 +3,11 @@
 //! Provides production-ready correlation of RPC requests with WebSocket responses
 
 use crate::rpc::{RpcError, RpcResponse};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::sync::oneshot;
-use serde::{Deserialize, Serialize};
 
 /// Pending RPC request awaiting response
 struct PendingRequest {
@@ -66,7 +66,10 @@ impl RpcCorrelationManager {
     }
 
     /// Handle incoming RPC response, correlating it with pending request
-    pub fn handle_response(&self, response: RpcResponse<serde_json::Value>) -> Result<(), RpcError> {
+    pub fn handle_response(
+        &self,
+        response: RpcResponse<serde_json::Value>,
+    ) -> Result<(), RpcError> {
         let mut pending = self.pending_requests.lock().unwrap();
 
         if let Some(pending_request) = pending.remove(&response.id) {
@@ -98,7 +101,11 @@ impl RpcCorrelationManager {
     }
 
     /// Handle incoming RPC error response
-    pub fn handle_error_response(&self, request_id: String, error: RpcError) -> Result<(), RpcError> {
+    pub fn handle_error_response(
+        &self,
+        request_id: String,
+        error: RpcError,
+    ) -> Result<(), RpcError> {
         let mut pending = self.pending_requests.lock().unwrap();
 
         if let Some(pending_request) = pending.remove(&request_id) {
@@ -114,7 +121,10 @@ impl RpcCorrelationManager {
         } else {
             Err(RpcError {
                 code: -32603,
-                message: format!("No pending request found for error response ID: {}", request_id),
+                message: format!(
+                    "No pending request found for error response ID: {}",
+                    request_id
+                ),
                 data: None,
             })
         }
@@ -160,7 +170,12 @@ impl RpcCorrelationManager {
 
     /// Get list of pending request IDs (for debugging)
     pub fn pending_request_ids(&self) -> Vec<String> {
-        self.pending_requests.lock().unwrap().keys().cloned().collect()
+        self.pending_requests
+            .lock()
+            .unwrap()
+            .keys()
+            .cloned()
+            .collect()
     }
 
     /// Cancel a specific pending request
@@ -205,7 +220,10 @@ impl RpcCorrelationManager {
         &self,
         request_id: String,
         method: String,
-    ) -> (String, tokio::sync::oneshot::Receiver<Result<RpcResponse<serde_json::Value>, RpcError>>) {
+    ) -> (
+        String,
+        tokio::sync::oneshot::Receiver<Result<RpcResponse<serde_json::Value>, RpcError>>,
+    ) {
         let (response_tx, response_rx) = oneshot::channel();
 
         let pending_request = PendingRequest {
@@ -214,7 +232,10 @@ impl RpcCorrelationManager {
             method: method.clone(),
         };
 
-        self.pending_requests.lock().unwrap().insert(request_id.clone(), pending_request);
+        self.pending_requests
+            .lock()
+            .unwrap()
+            .insert(request_id.clone(), pending_request);
         (request_id, response_rx)
     }
 
@@ -241,9 +262,9 @@ impl RpcCorrelationManager {
         response: Result<RpcResponse<serde_json::Value>, RpcError>,
     ) -> Result<(), String> {
         match response {
-            Ok(rpc_response) => self.handle_response(rpc_response)
-                .map_err(|e| e.message),
-            Err(error) => self.handle_error_response(request_id.to_string(), error)
+            Ok(rpc_response) => self.handle_response(rpc_response).map_err(|e| e.message),
+            Err(error) => self
+                .handle_error_response(request_id.to_string(), error)
                 .map_err(|e| e.message),
         }
     }
@@ -390,7 +411,9 @@ mod tests {
             data: None,
         };
 
-        assert!(manager.handle_error_response(request_id, error.clone()).is_ok());
+        assert!(manager
+            .handle_error_response(request_id, error.clone())
+            .is_ok());
 
         // Should have received error
         let result = response_rx.await.unwrap();

@@ -5,7 +5,7 @@
 use crate::transport::TransportError;
 use std::time::{Duration, Instant};
 
-use super::config::{ReliabilityMode, OrderingMode, CongestionControl, StreamConfig};
+use super::config::{CongestionControl, OrderingMode, ReliabilityMode, StreamConfig};
 
 /// WebTransport stream with advanced features
 #[derive(Debug, Clone)]
@@ -38,7 +38,9 @@ impl AdvancedWebTransportStream {
             send_latency: Duration::from_millis(10),
             delivery_guaranteed: matches!(config.reliability, ReliabilityMode::Reliable),
             max_retransmissions: match config.reliability {
-                ReliabilityMode::PartiallyReliable { max_retransmissions } => max_retransmissions,
+                ReliabilityMode::PartiallyReliable {
+                    max_retransmissions,
+                } => max_retransmissions,
                 _ => 0,
             },
             retransmission_count: 0,
@@ -71,7 +73,10 @@ impl AdvancedWebTransportStream {
         self.can_receive
     }
 
-    pub async fn send_data<T: serde::Serialize>(&mut self, _data: &T) -> Result<(), TransportError> {
+    pub async fn send_data<T: serde::Serialize>(
+        &mut self,
+        _data: &T,
+    ) -> Result<(), TransportError> {
         // Simulate sending data
         self.last_used = Instant::now();
         Ok(())

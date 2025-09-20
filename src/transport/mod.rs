@@ -11,22 +11,40 @@ use futures::{Sink, Stream};
 use std::pin::Pin;
 
 pub mod adaptive;
+pub mod optimized;
 pub mod sse;
 pub mod websocket;
 pub mod webtransport;
-pub mod optimized;
 
 // Re-export main types
 // Transport and TransportError are defined below in this module
 
 /// A unified message type that can be sent over any transport
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+)]
 pub struct Message {
     pub data: Vec<u8>,
     pub message_type: MessageType,
 }
 
-#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, rkyv::Archive, rkyv::Serialize, rkyv::Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    serde::Serialize,
+    serde::Deserialize,
+    rkyv::Archive,
+    rkyv::Serialize,
+    rkyv::Deserialize,
+)]
 pub enum MessageType {
     Text,
     Binary,
@@ -64,6 +82,12 @@ pub enum TransportError {
 
     #[error("Not connected")]
     NotConnected,
+
+    #[error("Invalid state: {0}")]
+    InvalidState(String),
+
+    #[error("Operation timed out")]
+    Timeout,
 }
 
 /// Connection state for monitoring
@@ -161,18 +185,24 @@ pub trait Transport: Send + Sync + 'static {
     /// Send a message (default implementation for compatibility)
     async fn send_message(&self, _message: &Message) -> Result<(), TransportError> {
         // Default implementation returns not supported
-        Err(TransportError::NotSupported("send_message not implemented".to_string()))
+        Err(TransportError::NotSupported(
+            "send_message not implemented".to_string(),
+        ))
     }
 
     /// Receive a message (default implementation for compatibility)
     async fn receive_message(&self) -> Result<Message, TransportError> {
         // Default implementation returns not supported
-        Err(TransportError::NotSupported("receive_message not implemented".to_string()))
+        Err(TransportError::NotSupported(
+            "receive_message not implemented".to_string(),
+        ))
     }
 
     /// Create a bidirectional stream (WebTransport specific)
     async fn create_bidirectional_stream(&mut self) -> Result<(), TransportError> {
-        Err(TransportError::NotSupported("Bidirectional streams not supported".to_string()))
+        Err(TransportError::NotSupported(
+            "Bidirectional streams not supported".to_string(),
+        ))
     }
 }
 
@@ -224,11 +254,11 @@ impl TransportFactory {
     ) -> Result<
         Box<
             dyn Transport<
-                    Stream = Pin<
-                        Box<dyn Stream<Item = Result<Message, TransportError>> + Send + Unpin>,
-                    >,
-                    Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>,
+                Stream = Pin<
+                    Box<dyn Stream<Item = Result<Message, TransportError>> + Send + Unpin>,
                 >,
+                Sink = Pin<Box<dyn Sink<Message, Error = TransportError> + Send + Unpin>>,
+            >,
         >,
         TransportError,
     > {
@@ -255,7 +285,9 @@ impl TransportFactory {
             }
         }
 
-        Err(TransportError::NotSupported("No suitable transport available".to_string()))
+        Err(TransportError::NotSupported(
+            "No suitable transport available".to_string(),
+        ))
     }
 
     /// Create a specific transport type

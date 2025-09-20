@@ -2,19 +2,21 @@
 //!
 //! Complete Server-Sent Events implementation with real HTTP streaming
 
-use crate::transport::{ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError};
+use crate::transport::{
+    ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError,
+};
 use async_trait::async_trait;
 use futures::{Sink, Stream, StreamExt};
+use reqwest::{header, Client};
+use std::collections::{HashMap, HashSet};
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
-use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
 use tokio::time::sleep;
-use reqwest::{Client, header};
 
-use super::config::{ReconnectionStrategy, HeartbeatConfig};
+use super::config::{HeartbeatConfig, ReconnectionStrategy};
 use super::events::SseEvent;
 
 /// Server-Sent Events connection implementation
@@ -79,7 +81,10 @@ impl SseConnection {
     }
 
     /// Unsubscribe from specific event types
-    pub async fn unsubscribe_from_event_type(&self, event_type: String) -> Result<(), TransportError> {
+    pub async fn unsubscribe_from_event_type(
+        &self,
+        event_type: String,
+    ) -> Result<(), TransportError> {
         let mut subscribed = self.subscribed_event_types.lock().unwrap();
         subscribed.remove(&event_type);
         Ok(())
@@ -100,7 +105,10 @@ impl SseConnection {
     where
         F: Fn(Message) + Send + Sync + 'static,
     {
-        self.event_handlers.lock().unwrap().insert(event_type, Box::new(handler));
+        self.event_handlers
+            .lock()
+            .unwrap()
+            .insert(event_type, Box::new(handler));
     }
 
     /// Parse SSE event from raw data
@@ -153,7 +161,16 @@ impl SseConnection {
             };
 
             loop {
-                match Self::connect_to_sse(&client, &url, &event_sender, &subscribed_types, &heartbeat_config, &last_heartbeat).await {
+                match Self::connect_to_sse(
+                    &client,
+                    &url,
+                    &event_sender,
+                    &subscribed_types,
+                    &heartbeat_config,
+                    &last_heartbeat,
+                )
+                .await
+                {
                     Ok(_) => {
                         // Connection successful, reset attempts
                         reconnect_attempts = 0;
@@ -172,7 +189,11 @@ impl SseConnection {
                         let delay = match *reconnection_strategy.lock().unwrap() {
                             ReconnectionStrategy::None => break,
                             ReconnectionStrategy::Immediate => Duration::from_millis(100),
-                            ReconnectionStrategy::ExponentialBackoff { base_delay, max_delay, .. } => {
+                            ReconnectionStrategy::ExponentialBackoff {
+                                base_delay,
+                                max_delay,
+                                ..
+                            } => {
                                 let delay = base_delay * 2_u32.pow(reconnect_attempts.min(10));
                                 delay.min(max_delay)
                             }
@@ -210,7 +231,10 @@ impl SseConnection {
             .map_err(|e| TransportError::ConnectionFailed(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(TransportError::ConnectionFailed(format!("HTTP error: {}", response.status())));
+            return Err(TransportError::ConnectionFailed(format!(
+                "HTTP error: {}",
+                response.status()
+            )));
         }
 
         let mut stream = response.bytes_stream();
@@ -254,7 +278,9 @@ impl SseConnection {
             // Check heartbeat timeout
             if heartbeat_config.lock().unwrap().enabled {
                 if last_heartbeat_time.elapsed() > heartbeat_config.lock().unwrap().timeout {
-                    return Err(TransportError::ConnectionFailed("Heartbeat timeout".to_string()));
+                    return Err(TransportError::ConnectionFailed(
+                        "Heartbeat timeout".to_string(),
+                    ));
                 }
             }
         }
@@ -307,9 +333,11 @@ impl SseConnection {
 
     /// Check if subscribed to a specific event type
     pub async fn is_subscribed_to_event_type(&self, event_type: &str) -> bool {
-        self.subscribed_event_types.lock().unwrap().contains(event_type)
+        self.subscribed_event_types
+            .lock()
+            .unwrap()
+            .contains(event_type)
     }
-
 
     /// Simulate connection loss for testing
     pub async fn simulate_connection_loss(&mut self) {
@@ -322,12 +350,17 @@ impl SseConnection {
         if let Some(url) = url {
             self.connect(&url).await
         } else {
-            Err(TransportError::ConnectionFailed("No URL available for reconnection".to_string()))
+            Err(TransportError::ConnectionFailed(
+                "No URL available for reconnection".to_string(),
+            ))
         }
     }
 
     /// Enable heartbeat with configuration
-    pub async fn enable_heartbeat(&mut self, config: HeartbeatConfig) -> Result<(), TransportError> {
+    pub async fn enable_heartbeat(
+        &mut self,
+        config: HeartbeatConfig,
+    ) -> Result<(), TransportError> {
         *self.heartbeat_config.lock().unwrap() = config;
         Ok(())
     }
@@ -373,12 +406,15 @@ impl Transport for SseConnection {
         let receiver = self.event_receiver.take().unwrap();
         let sender = self.event_sender.take().unwrap();
 
-        let stream = Box::pin(futures::stream::unfold(receiver, |mut rx| async move {
-            match rx.recv().await {
-                Some(msg) => Some((Ok(msg), rx)),
-                None => None,
-            }
-        }).boxed());
+        let stream = Box::pin(
+            futures::stream::unfold(receiver, |mut rx| async move {
+                match rx.recv().await {
+                    Some(msg) => Some((Ok(msg), rx)),
+                    None => None,
+                }
+            })
+            .boxed(),
+        );
         let sink = Box::pin(SseSink::new(sender));
 
         (stream, sink)
@@ -386,17 +422,23 @@ impl Transport for SseConnection {
 
     async fn send_message(&self, message: &Message) -> Result<(), TransportError> {
         // SSE is unidirectional (server to client), so sending is not supported
-        Err(TransportError::NotSupported("SSE does not support sending messages to server".to_string()))
+        Err(TransportError::NotSupported(
+            "SSE does not support sending messages to server".to_string(),
+        ))
     }
 
     async fn receive_message(&self) -> Result<Message, TransportError> {
         // SSE is unidirectional, so receiving is handled through the stream
-        Err(TransportError::NotSupported("Use split() to get the stream for receiving messages".to_string()))
+        Err(TransportError::NotSupported(
+            "Use split() to get the stream for receiving messages".to_string(),
+        ))
     }
 
     async fn create_bidirectional_stream(&mut self) -> Result<(), TransportError> {
         // SSE is unidirectional, so bidirectional streams are not supported
-        Err(TransportError::NotSupported("SSE does not support bidirectional streams".to_string()))
+        Err(TransportError::NotSupported(
+            "SSE does not support bidirectional streams".to_string(),
+        ))
     }
 
     fn state(&self) -> ConnectionState {
@@ -422,7 +464,9 @@ impl Sink<Message> for SseSink {
     }
 
     fn start_send(self: Pin<&mut Self>, item: Message) -> Result<(), Self::Error> {
-        self.sender.send(item).map_err(|_| TransportError::ConnectionClosed)
+        self.sender
+            .send(item)
+            .map_err(|_| TransportError::ConnectionClosed)
     }
 
     fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {

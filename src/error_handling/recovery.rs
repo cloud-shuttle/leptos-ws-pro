@@ -2,8 +2,8 @@
 //!
 //! Recovery strategies and error handling mechanisms
 
-use std::time::Duration;
 use std::collections::HashMap;
+use std::time::Duration;
 
 /// Recovery strategies for different error types
 #[derive(Debug, Clone, PartialEq)]

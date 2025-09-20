@@ -2,20 +2,24 @@
 //!
 //! Complete WebTransport implementation with HTTP/3 support
 
-use crate::transport::{ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError};
+use crate::transport::{
+    ConnectionState, Message, MessageType, Transport, TransportConfig, TransportError,
+};
 use async_trait::async_trait;
 use futures::{Sink, Stream, StreamExt};
+use reqwest::{header, Client};
+use serde_json;
+use std::collections::HashMap;
 use std::pin::Pin;
 use std::sync::{Arc, Mutex};
 use std::task::{Context, Poll};
-use std::collections::HashMap;
 use std::time::Duration;
 use tokio::sync::mpsc;
-use reqwest::{Client, header};
-use serde_json;
 
+use super::config::{
+    CongestionControl, OrderingMode, PerformanceMetrics, ReliabilityMode, StreamConfig,
+};
 use super::stream::AdvancedWebTransportStream;
-use super::config::{StreamConfig, PerformanceMetrics, ReliabilityMode, OrderingMode, CongestionControl};
 
 /// WebTransport connection implementation
 pub struct WebTransportConnection {
@@ -59,7 +63,10 @@ impl WebTransportConnection {
         *self.state.lock().unwrap()
     }
 
-    pub async fn create_stream(&self, stream_config: StreamConfig) -> Result<AdvancedWebTransportStream, TransportError> {
+    pub async fn create_stream(
+        &self,
+        stream_config: StreamConfig,
+    ) -> Result<AdvancedWebTransportStream, TransportError> {
         let stream_id = {
             let mut next_id = self.next_stream_id.lock().unwrap();
             let id = *next_id;
@@ -69,7 +76,10 @@ impl WebTransportConnection {
 
         let stream = AdvancedWebTransportStream::new(stream_id, stream_config);
 
-        self.streams.lock().unwrap().insert(stream_id, stream.clone());
+        self.streams
+            .lock()
+            .unwrap()
+            .insert(stream_id, stream.clone());
 
         // Update metrics
         let mut metrics = self.metrics.lock().unwrap();
@@ -109,7 +119,9 @@ impl WebTransportConnection {
 
         let task = tokio::spawn(async move {
             // Simulate WebTransport connection over HTTP/3
-            match Self::connect_to_webtransport(&client, &url, &event_sender, &streams, &metrics).await {
+            match Self::connect_to_webtransport(&client, &url, &event_sender, &streams, &metrics)
+                .await
+            {
                 Ok(_) => {
                     *state.lock().unwrap() = ConnectionState::Connected;
                 }
@@ -146,7 +158,10 @@ impl WebTransportConnection {
             .map_err(|e| TransportError::ConnectionFailed(e.to_string()))?;
 
         if !response.status().is_success() {
-            return Err(TransportError::ConnectionFailed(format!("HTTP error: {}", response.status())));
+            return Err(TransportError::ConnectionFailed(format!(
+                "HTTP error: {}",
+                response.status()
+            )));
         }
 
         // Simulate WebTransport stream processing
@@ -183,7 +198,8 @@ impl WebTransportConnection {
         // Try to parse as JSON first
         if let Ok(json_value) = serde_json::from_slice::<serde_json::Value>(data) {
             if let Some(message_type) = json_value.get("type").and_then(|v| v.as_str()) {
-                let data = json_value.get("data")
+                let data = json_value
+                    .get("data")
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .as_bytes()
@@ -213,7 +229,9 @@ impl WebTransportConnection {
     }
 
     /// Create a bidirectional stream
-    pub async fn create_bidirectional_stream(&mut self) -> Result<AdvancedWebTransportStream, TransportError> {
+    pub async fn create_bidirectional_stream(
+        &mut self,
+    ) -> Result<AdvancedWebTransportStream, TransportError> {
         let stream_config = StreamConfig {
             stream_id: 0, // Will be set by create_stream
             reliability: ReliabilityMode::Reliable,
@@ -225,7 +243,9 @@ impl WebTransportConnection {
     }
 
     /// Create a unidirectional stream
-    pub async fn create_unidirectional_stream(&mut self) -> Result<AdvancedWebTransportStream, TransportError> {
+    pub async fn create_unidirectional_stream(
+        &mut self,
+    ) -> Result<AdvancedWebTransportStream, TransportError> {
         let stream_config = StreamConfig {
             stream_id: 0, // Will be set by create_stream
             reliability: ReliabilityMode::BestEffort,
@@ -237,7 +257,11 @@ impl WebTransportConnection {
     }
 
     /// Send data over a specific stream
-    pub async fn send_over_stream(&self, stream_id: u32, data: &[u8]) -> Result<(), TransportError> {
+    pub async fn send_over_stream(
+        &self,
+        stream_id: u32,
+        data: &[u8],
+    ) -> Result<(), TransportError> {
         let streams = self.streams.lock().unwrap();
         if let Some(stream) = streams.get(&stream_id) {
             if stream.can_send() {
@@ -262,7 +286,10 @@ impl WebTransportConnection {
     }
 
     /// Create multiple streams for multiplexing
-    pub async fn create_multiplexed_streams(&self, count: usize) -> Result<Vec<AdvancedWebTransportStream>, TransportError> {
+    pub async fn create_multiplexed_streams(
+        &self,
+        count: usize,
+    ) -> Result<Vec<AdvancedWebTransportStream>, TransportError> {
         let mut streams = Vec::new();
         let default_config = StreamConfig::default();
 
@@ -332,12 +359,15 @@ impl Transport for WebTransportConnection {
         let receiver = self.event_receiver.take().unwrap();
         let sender = self.event_sender.take().unwrap();
 
-        let stream = Box::pin(futures::stream::unfold(receiver, |mut rx| async move {
-            match rx.recv().await {
-                Some(msg) => Some((Ok(msg), rx)),
-                None => None,
-            }
-        }).boxed());
+        let stream = Box::pin(
+            futures::stream::unfold(receiver, |mut rx| async move {
+                match rx.recv().await {
+                    Some(msg) => Some((Ok(msg), rx)),
+                    None => None,
+                }
+            })
+            .boxed(),
+        );
         let sink = Box::pin(WebTransportSink::new(sender));
 
         (stream, sink)
@@ -345,16 +375,21 @@ impl Transport for WebTransportConnection {
 
     async fn send_message(&self, message: &Message) -> Result<(), TransportError> {
         if let Some(sender) = &self.event_sender {
-            sender.send(message.clone())
+            sender
+                .send(message.clone())
                 .map_err(|_| TransportError::ConnectionClosed)
         } else {
-            Err(TransportError::ConnectionFailed("No sender available".to_string()))
+            Err(TransportError::ConnectionFailed(
+                "No sender available".to_string(),
+            ))
         }
     }
 
     async fn receive_message(&self) -> Result<Message, TransportError> {
         // WebTransport receiving is handled through the stream
-        Err(TransportError::NotSupported("Use split() to get the stream for receiving messages".to_string()))
+        Err(TransportError::NotSupported(
+            "Use split() to get the stream for receiving messages".to_string(),
+        ))
     }
 
     fn state(&self) -> ConnectionState {
@@ -376,7 +411,9 @@ impl WebTransportConnection {
         if let Some(url) = url {
             self.connect(&url).await
         } else {
-            Err(TransportError::ConnectionFailed("No URL configured".to_string()))
+            Err(TransportError::ConnectionFailed(
+                "No URL configured".to_string(),
+            ))
         }
     }
 
@@ -386,7 +423,9 @@ impl WebTransportConnection {
         if let Some(url) = url {
             self.connect(&url).await
         } else {
-            Err(TransportError::ConnectionFailed("No URL available for reconnection".to_string()))
+            Err(TransportError::ConnectionFailed(
+                "No URL available for reconnection".to_string(),
+            ))
         }
     }
 
@@ -397,7 +436,9 @@ impl WebTransportConnection {
     {
         // This is a simplified implementation for testing
         // In a real implementation, this would wait for the next message
-        Err(TransportError::ConnectionFailed("Not implemented".to_string()))
+        Err(TransportError::ConnectionFailed(
+            "Not implemented".to_string(),
+        ))
     }
 
     // Duplicate methods removed - using the ones defined in the main impl block
@@ -421,7 +462,9 @@ impl Sink<Message> for WebTransportSink {
     }
 
     fn start_send(self: Pin<&mut Self>, item: Message) -> Result<(), Self::Error> {
-        self.sender.send(item).map_err(|_| TransportError::ConnectionClosed)
+        self.sender
+            .send(item)
+            .map_err(|_| TransportError::ConnectionClosed)
     }
 
     fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {

@@ -298,6 +298,20 @@ This release is **fully production-ready** with:
 - ✅ **Published to crates.io** - Available as `leptos-ws-pro v0.10.1`
 - ✅ **Complete Documentation** - Updated examples and API documentation
 
+## 🙏 **Acknowledgements**
+
+This project builds upon the excellent foundation provided by the original [leptos_ws](https://github.com/TimTom2016/leptos_ws) library by [TimTom2016](https://github.com/TimTom2016). We are grateful for the initial WebSocket implementation and the inspiration it provided for creating this enhanced, production-ready version.
+
+**Leptos WebSocket Pro** extends the original concept with:
+
+- Advanced multi-transport support (WebSocket, WebTransport, SSE)
+- Enterprise-grade security features
+- High-performance optimizations
+- Comprehensive monitoring and metrics
+- Production-ready reliability features
+
+We acknowledge and thank the original contributors to `leptos_ws` for their pioneering work in bringing WebSocket functionality to the Leptos ecosystem.
+
 ## 🤝 **Contributing**
 
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.

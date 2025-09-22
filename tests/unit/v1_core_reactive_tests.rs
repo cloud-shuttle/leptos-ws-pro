@@ -29,7 +29,7 @@ mod reactive_core_tests {
     #[test]
     fn test_websocket_provider_creation() {
         let provider = WebSocketProvider::new("ws://localhost:8080");
-        assert_eq!(provider.url(), "ws://localhost:8080");
+        assert_eq!(provider.get_url(), "ws://localhost:8080");
 
         let config = provider.config();
         assert_eq!(config.url, "ws://localhost:8080");
@@ -55,7 +55,7 @@ mod reactive_core_tests {
 
         let provider = WebSocketProvider::with_config(config.clone());
 
-        assert_eq!(provider.url(), "wss://api.example.com/ws");
+        assert_eq!(provider.get_url(), "wss://api.example.com/ws");
         assert_eq!(provider.config().protocols.len(), 2);
         assert_eq!(provider.config().heartbeat_interval, Some(15));
         assert_eq!(provider.config().reconnect_interval, Some(5));
@@ -206,11 +206,11 @@ mod reactive_core_tests {
         let context = WebSocketContext::new(provider);
 
         // Test heartbeat configuration
-        assert_eq!(context.reconnect_interval(), Some(30));
+        assert_eq!(context.reconnect_interval(), 30);
 
         // Test sending heartbeat
         let result = context.send_heartbeat();
-        assert!(result.await.is_ok());
+        assert!(result.is_ok());
 
         // Verify heartbeat was added to sent messages
         let sent_messages: Vec<serde_json::Value> = context.get_sent_messages();
@@ -234,13 +234,13 @@ mod reactive_core_tests {
 
         // Test reconnection attempt
         let result = context.attempt_reconnection();
-        assert!(result.await.is_ok());
+        assert!(result.is_ok());
         assert_eq!(context.reconnection_attempts().get(), 1);
 
         // Test multiple attempts
         for i in 2..=5 {
             let result = context.attempt_reconnection();
-            assert!(result.await.is_ok());
+            assert!(result.is_ok());
             assert_eq!(context.reconnection_attempts().get(), i);
         }
     }
@@ -308,7 +308,7 @@ mod reactive_core_tests {
         assert!(connection.is_some());
 
         let result = context.return_connection_to_pool(());
-        assert!(result.await.is_ok());
+        assert!(result.is_ok());
     }
 }
 
@@ -595,7 +595,7 @@ mod async_operations_tests {
 
         // Test disconnection
         let result = context.disconnect().await;
-        assert!(result.await.is_ok());
+        assert!(result.is_ok());
         assert_eq!(context.connection_state().get(), ConnectionState::Disconnected);
     }
 

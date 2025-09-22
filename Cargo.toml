@@ -47,6 +47,11 @@ web-sys = { version = "0.3", optional = true, features = [
     "ErrorEvent",
 ] }
 
+# WASM support
+wasm-bindgen = { version = "0.2", optional = true }
+wasm-bindgen-futures = { version = "0.4", optional = true }
+js-sys = { version = "0.3", optional = true }
+
 # HTTP and WebTransport
 reqwest = { version = "0.12", features = ["json", "stream"], optional = true }
 wtransport = { version = "0.6.1", optional = true }
@@ -104,6 +109,7 @@ default = ["client", "server", "compression", "metrics", "dep:futures", "dep:tra
 client = ["gloo-net", "web-sys", "reqwest"]
 server = ["dep:tokio", "axum", "dep:tower", "dep:tower-http", "dep:tokio-tungstenite", "dep:futures-util"]
 ssr = ["leptos/ssr", "dep:tokio", "dep:futures"]
+wasm = ["web-sys", "dep:wasm-bindgen", "dep:wasm-bindgen-futures", "dep:js-sys"]
 
 # Transport protocols
 websocket = ["client", "server"]

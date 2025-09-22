@@ -1074,7 +1074,6 @@ struct PerformanceAlert {
             10000
         }
     }
-}
 
 // Remove duplicate MessageBatcher definition - using imported one
 
@@ -1103,6 +1102,5 @@ struct PerformanceAlert {
     async fn get_slowest_component(&self) -> Option<String> {
         self.profiles.keys().max_by_key(|k| self.profiles.get(*k)).cloned()
     }
-}
 
 // Remove duplicate PerformanceProfiler definition - using imported one

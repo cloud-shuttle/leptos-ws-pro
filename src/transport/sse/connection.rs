@@ -388,7 +388,24 @@ impl Transport for SseConnection {
         // Start the connection task
         self.start_connection_task(url.to_string()).await?;
 
-        Ok(())
+        // Wait a bit for the connection to be established
+        tokio::time::sleep(Duration::from_millis(100)).await;
+
+        // Check if connection was successful
+        let state = *self.state.lock().unwrap();
+        match state {
+            ConnectionState::Connected => Ok(()),
+            ConnectionState::Failed => Err(TransportError::ConnectionFailed("Connection failed".to_string())),
+            _ => {
+                // Still connecting, wait a bit more
+                tokio::time::sleep(Duration::from_millis(500)).await;
+                let final_state = *self.state.lock().unwrap();
+                match final_state {
+                    ConnectionState::Connected => Ok(()),
+                    _ => Err(TransportError::ConnectionFailed("Connection timeout".to_string())),
+                }
+            }
+        }
     }
 
     async fn disconnect(&mut self) -> Result<(), TransportError> {

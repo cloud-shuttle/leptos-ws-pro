@@ -273,7 +273,7 @@ impl TransportFactory {
 
         // Fallback to WebSocket
         if capabilities.websocket {
-            if let Ok(transport) = websocket::WebSocketConnection::new(config.clone()).await {
+            if let Ok(transport) = websocket::WebSocketTransport::new(config.clone()).await {
                 return Ok(Box::new(transport));
             }
         }
@@ -293,8 +293,8 @@ impl TransportFactory {
     /// Create a specific transport type
     pub async fn create_websocket(
         config: TransportConfig,
-    ) -> Result<websocket::WebSocketConnection, TransportError> {
-        websocket::WebSocketConnection::new(config).await
+    ) -> Result<websocket::WebSocketTransport, TransportError> {
+        websocket::WebSocketTransport::new(config).await
     }
 
     pub async fn create_webtransport(

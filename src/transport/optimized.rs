@@ -216,9 +216,108 @@ impl<T: Transport> Transport for OptimizedTransport<T> {
         let (incoming_tx, incoming_rx) = mpsc::unbounded_channel::<Message>();
         let (outgoing_tx, outgoing_rx) = mpsc::unbounded_channel::<Message>();
 
-        // Store channels for middleware processing
-        // Note: We can't store them in self here because we're consuming self
-        // In a real implementation, we'd need to restructure this
+        // Spawn background task to handle message flow between channels and underlying transport
+        let inner_transport = self.inner_transport.clone();
+        let security_middleware = self.security_middleware.clone();
+        let performance_middleware = self.performance_middleware.clone();
+        let client_id = self.client_id.clone();
+
+        // Task to handle outgoing messages (from sink to transport)
+        let outgoing_task = {
+            let inner_transport = inner_transport.clone();
+            let security_middleware = security_middleware.clone();
+            let performance_middleware = performance_middleware.clone();
+            let client_id = client_id.clone();
+
+            tokio::spawn(async move {
+                let mut outgoing_rx = outgoing_rx;
+                while let Some(message) = outgoing_rx.recv().await {
+                    // Apply security validation
+                    if let Err(_) = security_middleware
+                        .validate_outgoing_message(&message, &client_id)
+                        .await
+                    {
+                        continue; // Skip invalid messages
+                    }
+
+                    // Check rate limiting
+                    if let Err(_) = security_middleware
+                        .check_rate_limit(&client_id)
+                        .await
+                    {
+                        continue; // Skip rate limited messages
+                    }
+
+                    // Apply performance optimization - try to batch
+                    if let Err(_) = performance_middleware
+                        .batch_message(message.clone())
+                        .await
+                    {
+                        // If batching fails, send immediately
+                        let transport = inner_transport.lock().await;
+                        let _ = transport.send_message(&message).await;
+                    } else {
+                        // Check if we should flush the batch
+                        if performance_middleware.should_flush_batch().await {
+                            let batched_messages = performance_middleware.flush_batch().await;
+                            let transport = inner_transport.lock().await;
+                            for batched_message in batched_messages {
+                                let _ = transport.send_message(&batched_message).await;
+                            }
+                        }
+                    }
+                }
+            })
+        };
+
+        // Task to handle incoming messages (from transport to stream)
+        let incoming_task = {
+            let inner_transport = inner_transport.clone();
+            let security_middleware = security_middleware.clone();
+            let performance_middleware = performance_middleware.clone();
+            let client_id = client_id.clone();
+
+            tokio::spawn(async move {
+                loop {
+                    // Poll the underlying transport for messages
+                    let message = {
+                        let transport = inner_transport.lock().await;
+                        match transport.receive_message().await {
+                            Ok(msg) => msg,
+                            Err(_) => {
+                                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+                                continue;
+                            }
+                        }
+                    };
+
+                    // Apply security validation
+                    if let Err(_) = security_middleware
+                        .validate_incoming_message(&message, &client_id, None)
+                        .await
+                    {
+                        continue; // Skip invalid messages
+                    }
+
+                    // Cache the message for future retrieval
+                    let cache_key = format!(
+                        "msg_{}",
+                        std::time::SystemTime::now()
+                            .duration_since(std::time::UNIX_EPOCH)
+                            .unwrap()
+                            .as_secs()
+                    );
+                    performance_middleware
+                        .cache_message(cache_key, message.clone())
+                        .await;
+
+                    // Forward to the stream
+                    if incoming_tx.send(message).is_err() {
+                        break; // Receiver dropped
+                    }
+                }
+            })
+        };
 
         // Create wrapped stream and sink
         let wrapped_stream = Box::pin(OptimizedStream::new(incoming_rx));

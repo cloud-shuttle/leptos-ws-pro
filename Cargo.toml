@@ -24,6 +24,7 @@ leptos = { version = "0.8.8", default-features = false }
 leptos-use = { version = "0.16.2", default-features = false, features = [
     "use_websocket",
 ] }
+reactive_graph = "0.2.6"
 
 # Serialization and zero-copy
 serde = { version = "1", features = ["derive"] }

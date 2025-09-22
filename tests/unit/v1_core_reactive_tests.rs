@@ -10,6 +10,7 @@ use leptos_ws_pro::reactive::{
     WebSocketProvider,
 };
 use leptos_ws_pro::transport::{ConnectionState, Message, MessageType, TransportError};
+use reactive_graph::traits::Get;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::time::Instant;
@@ -84,17 +85,17 @@ mod reactive_core_tests {
         let context = WebSocketContext::new(provider);
 
         assert_eq!(context.get_url(), "ws://localhost:8080");
-        assert_eq!(context.connection_state(), ConnectionState::Disconnected);
+        assert_eq!(context.connection_state().get(), ConnectionState::Disconnected);
         assert!(!context.is_connected());
-        assert_eq!(context.reconnection_attempts(), 0);
-        assert_eq!(context.get_connection_quality(), 1.0);
+        assert_eq!(context.reconnection_attempts().get(), 0);
+        assert_eq!(context.connection_quality().get(), 1.0);
     }
 
     #[test]
     fn test_websocket_context_with_url() {
         let context = WebSocketContext::new_with_url("wss://secure.example.com:443/ws");
         assert_eq!(context.get_url(), "wss://secure.example.com:443/ws");
-        assert_eq!(context.connection_state(), ConnectionState::Disconnected);
+        assert_eq!(context.connection_state().get(), ConnectionState::Disconnected);
     }
 
     #[test]
@@ -104,24 +105,24 @@ mod reactive_core_tests {
 
         // Test initial state
         assert_eq!(context.state(), ConnectionState::Disconnected);
-        assert_eq!(context.connection_state(), ConnectionState::Disconnected);
+        assert_eq!(context.connection_state().get(), ConnectionState::Disconnected);
         assert!(!context.is_connected());
 
         // Test state transitions
         context.set_connection_state(ConnectionState::Connecting);
-        assert_eq!(context.connection_state(), ConnectionState::Connecting);
+        assert_eq!(context.connection_state().get(), ConnectionState::Connecting);
         assert!(!context.is_connected());
 
         context.set_connection_state(ConnectionState::Connected);
-        assert_eq!(context.connection_state(), ConnectionState::Connected);
+        assert_eq!(context.connection_state().get(), ConnectionState::Connected);
         assert!(context.is_connected());
 
         context.set_connection_state(ConnectionState::Reconnecting);
-        assert_eq!(context.connection_state(), ConnectionState::Reconnecting);
+        assert_eq!(context.connection_state().get(), ConnectionState::Reconnecting);
         assert!(!context.is_connected());
 
         context.set_connection_state(ConnectionState::Failed);
-        assert_eq!(context.connection_state(), ConnectionState::Failed);
+        assert_eq!(context.connection_state().get(), ConnectionState::Failed);
         assert!(!context.is_connected());
     }
 
@@ -165,8 +166,8 @@ mod reactive_core_tests {
         let context = WebSocketContext::new(provider);
 
         // Test message subscription
-        let subscription = context.subscribe_to_messages::<TestMessage>();
-        assert!(subscription.is_some());
+        let subscription = context.sent_messages();
+        assert!(!subscription.get().is_empty());
 
         // Add some messages
         let msg1 = Message {
@@ -199,17 +200,17 @@ mod reactive_core_tests {
         assert_eq!(received_messages[1].id, 2);
     }
 
-    #[test]
-    fn test_heartbeat_functionality() {
+    #[tokio::test]
+    async fn test_heartbeat_functionality() {
         let provider = WebSocketProvider::new("ws://localhost:8080");
         let context = WebSocketContext::new(provider);
 
         // Test heartbeat configuration
-        assert_eq!(context.heartbeat_interval(), Some(30));
+        assert_eq!(context.reconnect_interval(), Some(30));
 
         // Test sending heartbeat
         let result = context.send_heartbeat();
-        assert!(result.is_ok());
+        assert!(result.await.is_ok());
 
         // Verify heartbeat was added to sent messages
         let sent_messages: Vec<serde_json::Value> = context.get_sent_messages();
@@ -221,26 +222,26 @@ mod reactive_core_tests {
         assert!(heartbeat["timestamp"].is_u64());
     }
 
-    #[test]
-    fn test_reconnection_logic() {
+    #[tokio::test]
+    async fn test_reconnection_logic() {
         let provider = WebSocketProvider::new("ws://localhost:8080");
         let context = WebSocketContext::new(provider);
 
         // Test reconnection parameters
         assert_eq!(context.reconnect_interval(), 5);
         assert_eq!(context.max_reconnect_attempts(), 3);
-        assert_eq!(context.reconnection_attempts(), 0);
+        assert_eq!(context.reconnection_attempts().get(), 0);
 
         // Test reconnection attempt
         let result = context.attempt_reconnection();
-        assert!(result.is_ok());
-        assert_eq!(context.reconnection_attempts(), 1);
+        assert!(result.await.is_ok());
+        assert_eq!(context.reconnection_attempts().get(), 1);
 
         // Test multiple attempts
         for i in 2..=5 {
             let result = context.attempt_reconnection();
-            assert!(result.is_ok());
-            assert_eq!(context.reconnection_attempts(), i);
+            assert!(result.await.is_ok());
+            assert_eq!(context.reconnection_attempts().get(), i);
         }
     }
 
@@ -250,14 +251,14 @@ mod reactive_core_tests {
         let context = WebSocketContext::new(provider);
 
         // Test initial quality
-        assert_eq!(context.get_connection_quality(), 1.0);
+        assert_eq!(context.connection_quality().get(), 1.0);
 
         // Test quality updates
         context.update_connection_quality(0.8);
-        assert_eq!(context.get_connection_quality(), 0.8);
+        assert_eq!(context.connection_quality().get(), 0.8);
 
         context.update_connection_quality(0.3);
-        assert_eq!(context.get_connection_quality(), 0.3);
+        assert_eq!(context.connection_quality().get(), 0.3);
 
         // Test reconnection threshold
         assert!(context.should_reconnect_due_to_quality());
@@ -281,8 +282,8 @@ mod reactive_core_tests {
         assert_eq!(acks, vec![1, 2, 3]);
     }
 
-    #[test]
-    fn test_message_filter() {
+    #[tokio::test]
+    async fn test_message_filter() {
         let provider = WebSocketProvider::new("ws://localhost:8080");
         let context = WebSocketContext::new(provider);
 
@@ -295,8 +296,8 @@ mod reactive_core_tests {
         assert!(result.is_ok());
     }
 
-    #[test]
-    fn test_connection_pool() {
+    #[tokio::test]
+    async fn test_connection_pool() {
         let provider = WebSocketProvider::new("ws://localhost:8080");
         let context = WebSocketContext::new(provider);
 
@@ -307,7 +308,7 @@ mod reactive_core_tests {
         assert!(connection.is_some());
 
         let result = context.return_connection_to_pool(());
-        assert!(result.is_ok());
+        assert!(result.await.is_ok());
     }
 }
 
@@ -493,7 +494,7 @@ mod reactive_hooks_tests {
     fn test_use_websocket_hook() {
         let context = use_websocket("ws://localhost:8080");
         assert_eq!(context.get_url(), "ws://localhost:8080");
-        assert_eq!(context.connection_state(), ConnectionState::Disconnected);
+        assert_eq!(context.connection_state().get(), ConnectionState::Disconnected);
     }
 
     #[test]
@@ -515,8 +516,8 @@ mod reactive_hooks_tests {
         // In a real Leptos app, you would use presence_signal.get()
 
         // Test message subscription hook
-        let message_signal = use_message_subscription::<TestMessage>(&context);
-        assert!(message_signal.is_some());
+        let message_signal = use_message_subscription::<TestMessage>(&context, "test");
+        assert!(!message_signal.get().is_empty());
     }
 }
 
@@ -534,11 +535,11 @@ mod async_operations_tests {
         match connect_result {
             Err(TransportError::ConnectionFailed(_)) => {
                 // Expected when no server is running
-                assert_eq!(context.connection_state(), ConnectionState::Disconnected);
+                assert_eq!(context.connection_state().get(), ConnectionState::Disconnected);
             }
             Ok(()) => {
                 // Unexpected success in test environment
-                assert_eq!(context.connection_state(), ConnectionState::Connected);
+                assert_eq!(context.connection_state().get(), ConnectionState::Connected);
             }
             Err(e) => {
                 println!("Connection error: {:?}", e);
@@ -577,7 +578,7 @@ mod async_operations_tests {
 
         match result {
             Err(TransportError::ConnectionFailed(_)) => {
-                assert_eq!(context.connection_state(), ConnectionState::Disconnected);
+                assert_eq!(context.connection_state().get(), ConnectionState::Disconnected);
             }
             Err(e) => {
                 println!("Connection error: {:?}", e);
@@ -594,8 +595,8 @@ mod async_operations_tests {
 
         // Test disconnection
         let result = context.disconnect().await;
-        assert!(result.is_ok());
-        assert_eq!(context.connection_state(), ConnectionState::Disconnected);
+        assert!(result.await.is_ok());
+        assert_eq!(context.connection_state().get(), ConnectionState::Disconnected);
     }
 
     #[tokio::test]
@@ -734,7 +735,7 @@ mod edge_cases_tests {
 
         for state in states {
             context.set_connection_state(state);
-            assert_eq!(context.connection_state(), state);
+            assert_eq!(context.connection_state().get(), state);
         }
     }
 

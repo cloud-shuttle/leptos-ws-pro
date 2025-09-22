@@ -16,7 +16,7 @@ pub fn App() -> impl IntoView {
     let context = WebSocketContext::new(provider);
 
     // Get connection state signal
-    let connection_state = context.connection_state;
+    let connection_state = context.connection_state();
     let is_connected = move || context.is_connected();
 
     // Handle connection button click
@@ -30,7 +30,7 @@ pub fn App() -> impl IntoView {
             move || {
                 context.set_connection_state(ConnectionState::Connected);
             },
-            1000,
+            std::time::Duration::from_millis(1000),
         );
     };
 
@@ -43,7 +43,7 @@ pub fn App() -> impl IntoView {
     let send_message = move |_| {
         if is_connected() {
             let message = "Hello from Leptos WS Pro!";
-            context.send_message(message);
+            context.send_message(&message);
         }
     };
 

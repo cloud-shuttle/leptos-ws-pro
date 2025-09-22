@@ -97,6 +97,29 @@ impl PresenceMap {
     pub fn user_ids(&self) -> Vec<String> {
         self.users.keys().cloned().collect()
     }
+
+    /// Get the length (number of users) - for testing compatibility
+    pub fn len(&self) -> usize {
+        self.users.len()
+    }
+
+    /// Check if contains a key - for testing compatibility
+    pub fn contains_key(&self, key: &str) -> bool {
+        self.users.contains_key(key)
+    }
+
+    /// Index access - for testing compatibility
+    pub fn get(&self, key: &str) -> Option<&UserPresence> {
+        self.users.get(key)
+    }
+}
+
+impl std::ops::Index<&str> for PresenceMap {
+    type Output = UserPresence;
+
+    fn index(&self, key: &str) -> &Self::Output {
+        &self.users[key]
+    }
 }
 
 /// Individual user presence information

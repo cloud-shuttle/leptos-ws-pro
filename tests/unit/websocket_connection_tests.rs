@@ -4,6 +4,7 @@
 
 use futures::{SinkExt, StreamExt};
 use leptos_ws_pro::*;
+use reactive_graph::traits::Get;
 use serde::{Deserialize, Serialize};
 use tokio::net::TcpListener;
 use tokio_tungstenite::accept_async;
@@ -41,7 +42,7 @@ async fn test_websocket_connection_establishment() {
 
     // This should establish a real connection
     assert!(ws_context.connect().await.is_ok());
-    assert_eq!(ws_context.connection_state(), ConnectionState::Connected);
+    assert_eq!(ws_context.connection_state().get(), ConnectionState::Connected);
 
     server_task.abort();
 }
@@ -135,7 +136,7 @@ async fn test_websocket_connection_errors() {
     // This should fail with a connection error
     let result = ws_context.connect().await;
     assert!(result.is_err());
-    assert_eq!(ws_context.connection_state(), ConnectionState::Disconnected);
+    assert_eq!(ws_context.connection_state().get(), ConnectionState::Disconnected);
 }
 
 #[tokio::test]
@@ -149,13 +150,13 @@ async fn test_websocket_reconnection() {
 
     // First connection
     assert!(ws_context.connect().await.is_ok());
-    assert_eq!(ws_context.connection_state(), ConnectionState::Connected);
+    assert_eq!(ws_context.connection_state().get(), ConnectionState::Connected);
 
     // Simulate connection loss
     let _ = ws_context.disconnect().await;
-    assert_eq!(ws_context.connection_state(), ConnectionState::Disconnected);
+    assert_eq!(ws_context.connection_state().get(), ConnectionState::Disconnected);
 
     // Reconnect
     assert!(ws_context.connect().await.is_ok());
-    assert_eq!(ws_context.connection_state(), ConnectionState::Connected);
+    assert_eq!(ws_context.connection_state().get(), ConnectionState::Connected);
 }

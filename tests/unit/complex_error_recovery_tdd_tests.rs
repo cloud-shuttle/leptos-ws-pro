@@ -21,6 +21,14 @@ use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+#[derive(Debug, Clone)]
+struct BackoffConfig {
+    initial_delay: Duration,
+    max_delay: Duration,
+    multiplier: f64,
+    jitter: bool,
+}
+
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 struct RecoveryTestData {
     id: u64,
@@ -117,8 +125,7 @@ mod circuit_breaker_tests {
         // Open the circuit
         for _ in 0..3 {
             let _: Result<(), TransportError> = breaker
-                .call(|| async { Err(TransportError::ConnectionFailed("Failure".to_string())) })
-                .await;
+                .call(|| Ok(async { Err(TransportError::ConnectionFailed("Failure".to_string())) }));
         }
         assert_eq!(breaker.state(), CircuitBreakerState::Open);
 
@@ -136,15 +143,14 @@ mod circuit_breaker_tests {
             let success_count = success_count.clone();
             let task = tokio::spawn(async move {
                 let result = breaker
-                    .call(|| async {
+                    .call(|| Ok(async {
                         if i < 2 {
                             success_count.fetch_add(1, Ordering::SeqCst);
                             Ok(())
                         } else {
                             Err(TransportError::ConnectionFailed("Failure".to_string()))
                         }
-                    })
-                    .await;
+                    }));
                 result
             });
             tasks.push(task);
@@ -174,8 +180,7 @@ mod circuit_breaker_tests {
         // Open the circuit
         for _ in 0..3 {
             let _: Result<(), TransportError> = breaker
-                .call(|| async { Err(TransportError::ConnectionFailed("Failure".to_string())) })
-                .await;
+                .call(|| Ok(async { Err(TransportError::ConnectionFailed("Failure".to_string())) }));
         }
 
         // Wait for recovery timeout
@@ -184,7 +189,7 @@ mod circuit_breaker_tests {
 
         // When: Making successful calls in half-open state
         for _ in 0..3 {
-            let result = breaker.call(|| async { Ok(()) }).await;
+            let result = breaker.call(|| Ok(async { Ok(()) }));
             assert!(result.is_ok());
         }
 
@@ -192,7 +197,7 @@ mod circuit_breaker_tests {
         assert_eq!(breaker.state(), CircuitBreakerState::Closed);
 
         // And: Normal operation should resume
-        let result = breaker.call(|| async { Ok(()) }).await;
+        let result = breaker.call(|| Ok(async { Ok(()) }));
         assert!(result.is_ok());
     }
 }
@@ -903,7 +908,7 @@ impl ErrorCorrelationSystem {
     async fn get_correlated_errors(&self, id: &str) -> Vec<&ErrorContext> {
         self.errors
             .iter()
-            .filter(|e| e.trace_id == id || e.correlation_id == id)
+            .filter(|e| e.trace_id.as_ref().map(|t| t == id).unwrap_or(false) || e.correlation_id.as_ref().map(|c| c == id).unwrap_or(false))
             .collect()
     }
 
@@ -913,7 +918,7 @@ impl ErrorCorrelationSystem {
 
         for error in &self.errors {
             trace_groups
-                .entry(error.trace_id.clone())
+                .entry(error.trace_id.clone().unwrap_or_else(|| "unknown".to_string()))
                 .or_default()
                 .push(error);
         }
@@ -922,7 +927,7 @@ impl ErrorCorrelationSystem {
             if errors.len() > 1 {
                 let affected_services: Vec<String> = errors
                     .iter()
-                    .map(|e| e.service.clone())
+                    .filter_map(|e| e.service.clone())
                     .collect::<std::collections::HashSet<_>>()
                     .into_iter()
                     .collect();
@@ -944,7 +949,7 @@ impl ErrorCorrelationSystem {
         let errors: Vec<&ErrorContext> = self
             .errors
             .iter()
-            .filter(|e| e.trace_id == trace_id)
+            .filter(|e| e.trace_id.as_ref().map(|t| t == trace_id).unwrap_or(false))
             .collect();
 
         if errors.is_empty() {

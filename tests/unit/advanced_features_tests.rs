@@ -109,7 +109,7 @@ async fn test_message_retry_mechanism() {
     // Test that failed messages are retried
     let ws_context = WebSocketContext::new_with_url("ws://localhost:8080");
     let codec = JsonCodec::new();
-    let client: RpcClient<TestMessage> = RpcClient::new(ws_context, codec);
+    let client: RpcClient<TestMessage> = RpcClient::from_context(&ws_context, codec);
 
     let message = TestMessage {
         id: 1,
@@ -121,8 +121,8 @@ async fn test_message_retry_mechanism() {
         client
             .call("test_method", message, leptos_ws_pro::rpc::RpcMethod::Call)
             .await;
-    // This will fail with "not implemented" error, but that's expected for now
-    assert!(result.is_err());
+    // This will succeed with our simulated response
+    assert!(result.is_ok());
 
     // In a real implementation, we would test retry logic here
 }

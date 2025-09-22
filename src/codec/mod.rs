@@ -127,18 +127,12 @@ where
     }
 
     fn decode(&self, data: &[u8]) -> Result<T, CodecError> {
-        // Try JSON first (simpler for now)
-        match self.json_codec.decode(data) {
+        // Try rkyv first, then JSON
+        match self.rkyv_codec.decode(data) {
             Ok(result) => Ok(result),
             Err(_) => {
-                // Fall back to rkyv
-                match self.rkyv_codec.decode(data) {
-                    Ok(result) => Ok(result),
-                    Err(_e) => {
-                        // If both fail, return the JSON error
-                        self.json_codec.decode(data)
-                    }
-                }
+                // Fall back to JSON
+                self.json_codec.decode(data)
             }
         }
     }

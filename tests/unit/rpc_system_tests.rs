@@ -31,7 +31,7 @@ async fn test_rpc_client_creation() {
     // Test that RPC client can be created
     let ws_context = WebSocketContext::new_with_url("ws://localhost:8080");
     let codec = JsonCodec::new();
-    let client: RpcClient<TestRequest> = RpcClient::new(ws_context, codec);
+    let client: RpcClient<TestRequest> = RpcClient::from_context(&ws_context, codec);
 
     // Client should be created successfully
     assert!(true); // Basic creation test
@@ -42,7 +42,7 @@ async fn test_rpc_request_response() {
     // Test that RPC can handle request/response patterns
     let ws_context = WebSocketContext::new_with_url("ws://localhost:8080");
     let codec = JsonCodec::new();
-    let client: RpcClient<TestRequest> = RpcClient::new(ws_context, codec);
+    let client: RpcClient<TestRequest> = RpcClient::from_context(&ws_context, codec);
 
     let request = TestRequest {
         id: 1,
@@ -50,7 +50,7 @@ async fn test_rpc_request_response() {
     };
 
     // This should return a response since RPC is implemented
-    let result: Result<RpcResponse<TestRequest>, RpcError> =
+    let result: Result<RpcResponse<serde_json::Value>, RpcError> =
         client.call("test_method", request, RpcMethod::Call).await;
     assert!(result.is_ok());
 
@@ -68,7 +68,7 @@ async fn test_rpc_subscription() {
     // Test that RPC can handle subscriptions
     let ws_context = WebSocketContext::new_with_url("ws://localhost:8080");
     let codec = JsonCodec::new();
-    let client: RpcClient<TestRequest> = RpcClient::new(ws_context, codec);
+    let client: RpcClient<TestRequest> = RpcClient::from_context(&ws_context, codec);
 
     let request = TestRequest {
         id: 2,
@@ -94,7 +94,7 @@ async fn test_rpc_error_handling() {
     // Test that RPC properly handles various error conditions
     let ws_context = WebSocketContext::new_with_url("ws://localhost:8080");
     let codec = JsonCodec::new();
-    let client: RpcClient<TestRequest> = RpcClient::new(ws_context, codec);
+    let client: RpcClient<TestRequest> = RpcClient::from_context(&ws_context, codec);
 
     let request = TestRequest {
         id: 3,
@@ -102,12 +102,12 @@ async fn test_rpc_error_handling() {
     };
 
     // Test with invalid method name
-    let result: Result<RpcResponse<TestRequest>, RpcError> =
+    let result: Result<RpcResponse<serde_json::Value>, RpcError> =
         client.call("", request.clone(), RpcMethod::Call).await;
     assert!(result.is_ok());
 
     // Test with null method name
-    let result: Result<RpcResponse<TestRequest>, RpcError> =
+    let result: Result<RpcResponse<serde_json::Value>, RpcError> =
         client.call("null", request, RpcMethod::Call).await;
     assert!(result.is_ok());
 }
@@ -220,7 +220,7 @@ async fn test_rpc_subscription_lifecycle() {
     // Test RPC subscription lifecycle
     let ws_context = WebSocketContext::new_with_url("ws://localhost:8080");
     let codec = JsonCodec::new();
-    let client: RpcClient<TestRequest> = RpcClient::new(ws_context, codec);
+    let client: RpcClient<TestRequest> = RpcClient::from_context(&ws_context, codec);
 
     let request = TestRequest {
         id: 5,

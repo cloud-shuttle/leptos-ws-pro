@@ -4,6 +4,7 @@
 //! with JSON codec for message serialization.
 
 use leptos::prelude::*;
+use leptos::mount::mount_to_body;
 use leptos_ws_pro::{use_connection_status, use_websocket, Codec, JsonCodec, WsMessage};
 use serde::{Deserialize, Serialize};
 
@@ -100,7 +101,7 @@ pub fn BasicWebSocketExample() -> impl IntoView {
                         let ws_context = use_websocket("ws://localhost:8080");
                         println!("Is connected: {}", ws_context.is_connected());
                         println!("Connection state: {:?}", ws_context.connection_state());
-                        println!("Heartbeat interval: {:?}", ws_context.heartbeat_interval());
+                        println!("Heartbeat interval: {:?}", ws_context.reconnect_interval());
                         println!("Max reconnect attempts: {}", ws_context.max_reconnect_attempts());
                         println!("✅ Context demo completed!");
                     }
@@ -117,7 +118,7 @@ pub fn BasicWebSocketExample() -> impl IntoView {
                         let ws_context = use_websocket("ws://localhost:8080");
                         let metrics = ws_context.get_connection_metrics();
                         println!("Connection metrics: {:?}", metrics);
-                        println!("Connection quality: {}", ws_context.get_connection_quality());
+                        println!("Connection quality: {:?}", ws_context.connection_quality());
                         println!("✅ Metrics demo completed!");
                     }
                 >
@@ -129,5 +130,5 @@ pub fn BasicWebSocketExample() -> impl IntoView {
 }
 
 fn main() {
-    leptos::mount::mount_to_body(BasicWebSocketExample)
+    mount_to_body(BasicWebSocketExample)
 }
